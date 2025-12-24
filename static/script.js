@@ -23,8 +23,9 @@ function addMessage(sender, text) {
 
     const msg = document.createElement("div");
     msg.className = "message " + sender;
-    msg.textContent = (sender === "user" ? "👤 " : "🤖 ") + text;
+    msg.textContent = (sender === "user" ? "You : " : "GrahamAI : ") + text;
 
     messagesDiv.appendChild(msg);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
