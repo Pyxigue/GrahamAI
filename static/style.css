@@ -27,11 +27,11 @@ body {
 }
 
 .user {
-    color: #4dabf7;
+    color: #e4e9eb;
 }
 
 .bot {
-    color: #80ff72;
+    color: #e4e9eb;
 }
 
 .input-area {
@@ -53,3 +53,4 @@ button {
     border-radius: 5px;
     cursor: pointer;
 }
+
