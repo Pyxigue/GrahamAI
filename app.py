@@ -3,7 +3,7 @@ from groq import Groq
 import os
 
 
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 MEMOIRE_TAILLE = 5
 BOT_PERSONNALITE = (
     "Tu es GrahamAI, une IA amicale, drôle et concise. "
@@ -13,9 +13,7 @@ BOT_PERSONNALITE = (
 client = Groq(api_key=GROQ_API_KEY)
 memoire_utilisateurs = {}
 
-# -----------------------------
-# LOGIQUE DE MÉMOIRE
-# -----------------------------
+
 def generer_prompt(user_id, message):
     contexte = memoire_utilisateurs.get(user_id, [])
     contexte_str = "\n".join(contexte[-MEMOIRE_TAILLE:])
@@ -66,3 +64,4 @@ def api_chat():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
