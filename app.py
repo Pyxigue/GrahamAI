@@ -3,7 +3,7 @@ from groq import Groq
 import os
 
 
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 MEMOIRE_TAILLE = 5
 BOT_PERSONNALITE = (
     "Tu es GrahamAI, une IA amicale, drôle et concise. "
@@ -64,4 +64,5 @@ def api_chat():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
