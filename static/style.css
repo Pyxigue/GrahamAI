@@ -84,7 +84,6 @@ body::before {
     pointer-events: all;
 }
 
-/* Carte */
 .maintenance-panel {
     position: fixed;
     z-index: 10001;
@@ -121,7 +120,7 @@ body::before {
     fill: white;
 }
 
-/* Texte */
+
 .maintenance-title {
     font-size: 2.6rem;
     font-weight: 700;
@@ -144,5 +143,6 @@ body::before {
         font-size: 2rem;
     }
 }
+
 
 
