@@ -54,3 +54,95 @@ button {
     cursor: pointer;
 }
 
+
+body {
+    pointer-events: none;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    background: rgba(15, 15, 20, 0.97);
+    backdrop-filter: blur(8px);
+
+    pointer-events: all;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    pointer-events: all;
+}
+
+/* Carte */
+.maintenance-panel {
+    position: fixed;
+    z-index: 10001;
+    pointer-events: all;
+
+    background: linear-gradient(145deg, #222, #1a1a1a);
+    border-radius: 18px;
+    padding: 50px 60px;
+    text-align: center;
+
+    box-shadow:
+        0 0 40px rgba(77, 171, 247, 0.35),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+
+.maintenance-icon {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 25px;
+    background: radial-gradient(circle at top, #4dabf7, #1c7ed6);
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 0 25px rgba(77, 171, 247, 0.6);
+}
+
+.maintenance-icon svg {
+    width: 48px;
+    height: 48px;
+    fill: white;
+}
+
+/* Texte */
+.maintenance-title {
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+}
+
+.maintenance-text {
+    font-size: 1.15rem;
+    opacity: 0.85;
+    line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+    .maintenance-panel {
+        padding: 35px 30px;
+    }
+
+    .maintenance-title {
+        font-size: 2rem;
+    }
+}
+
+
