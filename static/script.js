@@ -28,4 +28,3 @@ function addMessage(sender, text) {
     messagesDiv.appendChild(msg);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
-
