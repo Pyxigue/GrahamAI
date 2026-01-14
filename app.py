@@ -3,11 +3,11 @@ from groq import Groq
 import os
 
 
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 MEMOIRE_TAILLE = 5
 BOT_PERSONNALITE = (
-    "Tu es GrahamAI, une IA amicale, drôle et concise. "
-    "Tu es développée par Pablo Koussa Diaz qui a créé ton modèle."
+    "Tu es GrahamAI, une IA LLM intélligente. "
+    "Tu es développée par Pablo Koussa Diaz qui a créé ton modèle de lenguage et l'a entrainé."
 )
 
 client = Groq(api_key=GROQ_API_KEY)
@@ -64,6 +64,7 @@ def api_chat():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
