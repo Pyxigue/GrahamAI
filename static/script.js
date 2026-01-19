@@ -1,5 +1,3 @@
-const userId = "web_user_" + Math.floor(Math.random() * 10000000);
-
 async function sendMessage() {
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
@@ -11,7 +9,7 @@ async function sendMessage() {
     const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, user_id: userId })
+        body: JSON.stringify({ message: text })
     });
 
     const data = await response.json();
@@ -29,9 +27,8 @@ function addMessage(sender, text) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-document.getElementById("messageInput").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-        sendMessage();
-    }
-});
-
+document
+    .getElementById("messageInput")
+    .addEventListener("keydown", e => {
+        if (e.key === "Enter") sendMessage();
+    });
