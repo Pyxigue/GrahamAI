@@ -28,3 +28,10 @@ function addMessage(sender, text) {
     messagesDiv.appendChild(msg);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
+document.getElementById("messageInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+        sendMessage();
+    }
+});
+
