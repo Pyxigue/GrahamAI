@@ -54,11 +54,35 @@ button {
     cursor: pointer;
 }
 
+
 .code-block {
-    background-color: #f4f4f4;
-    padding: 8px;
+    background-color: #1e1e1e;
+    color: #dcdcdc;
+    padding: 8px 12px;
     border-radius: 5px;
     font-family: monospace;
     white-space: pre-wrap;
+    position: relative;
+    margin: 8px 0;
 }
+
+
+.copy-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.copy-btn:hover {
+    background-color: #45a049;
+}
+
+
 
