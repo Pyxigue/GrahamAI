@@ -21,7 +21,14 @@ function addMessage(sender, text) {
 
     const msg = document.createElement("div");
     msg.className = "message " + sender;
-    msg.textContent = (sender === "user" ? "You : " : "GrahamAI : ") + text;
+
+    let formattedText = text
+        .replace(/```([\s\S]+?)```/g, '<pre class="code-block">$1</pre>')
+        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+        .replace(/_(.+?)_/g, '<i>$1</i>');
+
+    const prefix = sender === "user" ? "You : " : "GrahamAI : ";
+    msg.innerHTML = prefix + formattedText;
 
     messagesDiv.appendChild(msg);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -32,3 +39,4 @@ document
     .addEventListener("keydown", e => {
         if (e.key === "Enter") sendMessage();
     });
+
