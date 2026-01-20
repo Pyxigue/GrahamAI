@@ -55,34 +55,33 @@ button {
 }
 
 
-.code-block {
-    background-color: #1e1e1e;
-    color: #dcdcdc;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-family: monospace;
-    white-space: pre-wrap;
-    position: relative;
-    margin: 8px 0;
+.code-block pre {
+    margin: 0;
+    padding: 12px;
+    overflow-x: auto;
 }
 
+.code-block code {
+    color: #d4d4d4;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 14px;
+    white-space: pre;
+}
 
 .copy-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: #4caf50;
+    top: 6px;
+    right: 6px;
+    background: #22c55e;
     color: white;
     border: none;
-    border-radius: 3px;
-    padding: 2px 6px;
+    border-radius: 4px;
+    padding: 3px 8px;
     font-size: 12px;
     cursor: pointer;
+    opacity: 0.85;
 }
 
 .copy-btn:hover {
-    background-color: #45a049;
+    opacity: 1;
 }
-
-
-
