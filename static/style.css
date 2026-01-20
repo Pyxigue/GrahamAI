@@ -54,3 +54,11 @@ button {
     cursor: pointer;
 }
 
+.code-block {
+    background-color: #f4f4f4;
+    padding: 8px;
+    border-radius: 5px;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
