@@ -22,8 +22,16 @@ function addMessage(sender, text) {
     const msg = document.createElement("div");
     msg.className = "message " + sender;
 
+
     let formattedText = text
-        .replace(/```([\s\S]+?)```/g, '<pre class="code-block">$1</pre>')
+        .replace(/```([\s\S]+?)```/g, function(match, code) {
+            return `
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    ${code}
+                </div>
+            `;
+        })
         .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
         .replace(/_(.+?)_/g, '<i>$1</i>');
 
@@ -34,9 +42,13 @@ function addMessage(sender, text) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-document
-    .getElementById("messageInput")
-    .addEventListener("keydown", e => {
-        if (e.key === "Enter") sendMessage();
+function copyCode(button) {
+    const codeBlock = button.parentElement;
+    const code = codeBlock.innerText.replace("Copy", "");
+    navigator.clipboard.writeText(code.trim()).then(() => {
+        button.textContent = "Copied!";
+        setTimeout(() => button.textContent = "Copy", 1500);
     });
+}
+
 
