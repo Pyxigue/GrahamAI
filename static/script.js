@@ -16,26 +16,36 @@ async function sendMessage() {
     addMessage("bot", data.reply);
 }
 
+function escapeHTML(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
 function addMessage(sender, text) {
     const messagesDiv = document.getElementById("messages");
-
     const msg = document.createElement("div");
     msg.className = "message " + sender;
 
-
     let formattedText = text
-        .replace(/```([\s\S]+?)```/g, function(match, code) {
+        .replace(/```([\s\S]+?)```/g, (match, code) => {
+            const escapedCode = escapeHTML(code);
             return `
                 <div class="code-block">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    ${code}
+                    <pre><code>${escapedCode}</code></pre>
                 </div>
             `;
         })
-        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-        .replace(/_(.+?)_/g, '<i>$1</i>');
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/_(.+?)_/g, "<em>$1</em>")
+        .replace(/\n/g, "<br>");
 
-    const prefix = sender === "user" ? "You : " : "GrahamAI : ";
+    const prefix = sender === "user"
+        ? "<b>You :</b> "
+        : "<b>GrahamAI :</b> ";
+
     msg.innerHTML = prefix + formattedText;
 
     messagesDiv.appendChild(msg);
@@ -43,12 +53,18 @@ function addMessage(sender, text) {
 }
 
 function copyCode(button) {
-    const codeBlock = button.parentElement;
-    const code = codeBlock.innerText.replace("Copy", "");
-    navigator.clipboard.writeText(code.trim()).then(() => {
+    const code = button.parentElement.querySelector("code").innerText;
+    navigator.clipboard.writeText(code).then(() => {
         button.textContent = "Copied!";
         setTimeout(() => button.textContent = "Copy", 1500);
     });
 }
+
+document.getElementById("messageInput")
+    .addEventListener("keydown", e => {
+        if (e.key === "Enter") sendMessage();
+    });
+
+
 
 
