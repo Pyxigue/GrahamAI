@@ -10,8 +10,9 @@
 <body>
     <div class="chat-container">
         <div class="flex items-center gap-3 mb-4">
-            <img src="{{ url_for('static', filename='G.png') }}" alt="Logo GrahamAI" class="h-10 w-10">
-            <h2 class="text-2xl font-bold text-green-700">GrahamAI</h2>
+            <img src="{{ url_for('static', filename='G.png') }}" alt="Logo GrahamAI" class="h-10 w-10 align-middle">
+            <h2 class="text-2xl font-bold text-green-700 leading-none">GrahamAI</h2>
+
         </div>
         
         <div id="messages"></div>
@@ -25,6 +26,7 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
+
 
 
 
