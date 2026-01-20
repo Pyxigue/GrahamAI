@@ -2,20 +2,17 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="google-site-verification" content="iEr_MKIBkqw6bTzVhaTEnslOv7PwnxwLraFtm9ooDYU" />
+    <meta name="google-site-verification" content="iEr_MKIBkqw6bTzVhaTEnslOv7PwnxwLraFtm9ooDYU">
     <title>GrahamAI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='G.png') }}">
 </head>
 <body>
     <div class="chat-container">
-        <!-- Logo + Titre -->
         <div class="flex items-center gap-3 mb-4">
             <img src="{{ url_for('static', filename='G.png') }}" alt="Logo GrahamAI" class="h-10 w-10">
             <h2 class="text-2xl font-bold text-green-700">GrahamAI</h2>
         </div>
-
-        <p class="user">Bonjour {{ user }}</p>
 
         <div id="messages"></div>
 
@@ -23,13 +20,13 @@
             <input id="messageInput" type="text" placeholder="Écris un message..." />
             <button onclick="sendMessage()">Envoyer</button>
         </div>
-
-        <a href="{{ url_for('logout') }}">Déconnexion</a>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
+
+
 
 
 
