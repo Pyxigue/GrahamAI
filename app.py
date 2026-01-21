@@ -18,6 +18,13 @@ BOT_PROMPT = (
     "Réponds clairement et simplement."
 )
 
+conversation = [
+    {"role": "system", "content": BOT_PROMPT}
+]
+
+MAX_MESSAGES = 5 
+
+
 
 @app.route("/")
 def index():
@@ -31,18 +38,26 @@ def chat():
     if not message:
         return jsonify({"error": "Message vide"}), 400
 
+    conversation.append({"role": "user", "content": message})
+
+    recent_messages = (
+        [conversation[0]] + conversation[-MAX_MESSAGES * 2 :]
+    )
+
     completion = client.chat.completions.create(
         model="llama-3.1-8b-instant",
-        messages=[
-            {"role": "system", "content": BOT_PROMPT},
-            {"role": "user", "content": message}
-        ]
+        messages=recent_messages
     )
 
     reply = completion.choices[0].message.content
 
+
+    conversation.append({"role": "assistant", "content": reply})
+
     return jsonify({"reply": reply})
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
