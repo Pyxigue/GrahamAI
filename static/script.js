@@ -59,25 +59,41 @@ async function sendMessage(){
     loadChats();
 }
 
-function addMessage(sender,text){
-    const messagesDiv=document.getElementById("messages");
-    const msg=document.createElement("div"); msg.className="message "+sender;
+function addMessage(sender, text) {
+    const messagesDiv = document.getElementById("messages");
+    const msg = document.createElement("div");
+    msg.className = "message " + sender;
 
-    text=text.replace(/^python\s*\n/,"").replace(/\r\n|\r/g,"\n");
+    text = text.replace(/^python\s*\n?/, "");
 
-    let formattedText=text.replace(/```([\s\S]+?)```/g,(match,code)=>{
-        const escaped=code.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
-        return `<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code>${escaped}</code></pre></div>`;
+    let formattedText = text.replace(/```([\s\S]+?)```/g, (match, code) => {
+        const escaped = code
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        return `
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre><code>${escaped}</code></pre>
+            </div>
+        `;
     });
 
-    formattedText=formattedText.replace(/\n/g,"<br>");
-    const prefix=sender==="user"?"<b>You :</b> ":"<b>GrahamAI :</b> ";
-    msg.innerHTML=prefix+formattedText;
+    formattedText = formattedText.replace(/((?!<div class="code-block">)[\s\S]+)/g, (m) =>
+        m.replace(/\n/g, "<br>")
+    );
+
+    const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
+    msg.innerHTML = prefix + formattedText;
+
     messagesDiv.appendChild(msg);
 
-    msg.querySelectorAll("pre code").forEach(block=>hljs.highlightElement(block));
-    messagesDiv.scrollTop=messagesDiv.scrollHeight;
+    msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
 
 function copyCode(btn){
     const code=btn.parentElement.querySelector("code").innerText;
@@ -87,3 +103,4 @@ function copyCode(btn){
 document.getElementById("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter") sendMessage();});
 document.getElementById("newChatBtn").addEventListener("click",newChat);
 loadChats();
+
