@@ -3,7 +3,7 @@ from groq import Groq
 import os
 
 app = Flask(__name__)
-app.secret_key = "un_secret_super_secret"
+app.secret_key = "s01"
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 if not GROQ_API_KEY:
@@ -70,3 +70,4 @@ def chat():
     session.modified = True
 
     return jsonify({"reply": reply})
+
