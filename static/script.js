@@ -210,7 +210,14 @@ input.addEventListener("keydown", e => {
 
 });
 
+input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + "px";
+});
+
+
 document.getElementById("newChatBtn").addEventListener("click", newChat);
 
 
 loadChats();
+
