@@ -5,6 +5,14 @@ async function loadChats() {
     const chats = await res.json();
     renderChatList(chats);
     if (chats.length>0 && !currentChat) selectChat(chats[0]);
+    else showNoChatMessage();
+}
+
+function showNoChatMessage() {
+    const messagesDiv = document.getElementById("messages");
+    if (!currentChat) {
+        messagesDiv.innerHTML = '<div class="no-chat-msg">Choisir ou créer un chat</div>';
+    }
 }
 
 async function newChat() {
@@ -21,7 +29,11 @@ async function deleteChat(chat_id){
     loadChats();
 }
 
-function selectChat(chat){ currentChat=chat; renderMessages(chat.messages); }
+function selectChat(chat){
+    currentChat=chat; 
+    if(chat.messages.length===0) showNoChatMessage();
+    else renderMessages(chat.messages);
+}
 
 function renderChatList(chats){
     const list=document.getElementById("chatList");
@@ -49,13 +61,20 @@ function renderMessages(messages){
 }
 
 async function sendMessage(){
+    if(!currentChat) { alert("Sélectionne un chat ou crée-en un"); return; }
+    if(currentChat.messages.length>=30){ alert("Limite 30 messages atteinte"); return; }
+
     const input=document.getElementById("messageInput");
     const text=input.value.trim();
-    if(!text || !currentChat) return;
+    if(!text) return;
     addMessage("user",text); input.value="";
     const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({chat_id:currentChat.id,message:text})});
     const data=await res.json();
+    if(data.error){ alert(data.error); return; }
     addMessage("bot",data.reply);
+
+    currentChat.messages.push({sender:"user",text}); 
+    currentChat.messages.push({sender:"bot",text:data.reply});
     loadChats();
 }
 
@@ -71,16 +90,13 @@ function addMessage(sender, text) {
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
-
-        return `
-            <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                <pre><code>${escaped}</code></pre>
-            </div>
-        `;
+        return `<div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>${escaped}</code></pre>
+                </div>`;
     });
 
-    formattedText = formattedText.replace(/((?!<div class="code-block">)[\s\S]+)/g, (m) => m.replace(/\n/g, "<br>"));
+    formattedText = formattedText.replace(/((?!<div class="code-block">)[\s\S]+)/g, m => m.replace(/\n/g,"<br>"));
 
     const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
     msg.innerHTML = prefix + formattedText;
