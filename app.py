@@ -27,8 +27,7 @@ MAX_MESSAGES_PER_CHAT = 30
 
 @app.route("/")
 def index():
-    if "chats" not in session:
-        session["chats"] = []
+    session.setdefault("chats", [])
     return render_template("index.html")
 
 @app.get("/api/chats")
@@ -38,16 +37,13 @@ def get_chats():
 @app.post("/api/chats/new")
 def new_chat():
     chats = session.get("chats", [])
-
     if len(chats) >= MAX_CHATS:
         return jsonify({"error": "Limite de chats atteinte"}), 400
-
     chat = {
         "id": str(uuid.uuid4()),
         "name": "Nouveau chat",
         "messages": []
     }
-
     chats.append(chat)
     session["chats"] = chats
     session.modified = True
@@ -101,16 +97,13 @@ def chat():
 
     reply = completion.choices[0].message.content.strip()
 
-    # supprime python ou python3 au début
     if reply.lower().startswith("python"):
         reply = "\n".join(reply.split("\n")[1:])
 
-    # nettoie retour chariot
     reply = reply.replace("\r\n", "\n").replace("\r", "\n")
 
     chat["messages"].append({"sender": "bot", "text": reply})
-
     session["chats"] = chats
     session.modified = True
 
-    return jsonify({"reply": reply})
+    return jsonify({"reply": reply, "chat": chat})
