@@ -55,17 +55,18 @@ button {
 }
 
 
+.code-block {
+    position: relative; 
+    margin: 10px 0;
+    background: #1e1e1e;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
 .code-block pre {
     margin: 0;
     padding: 12px;
     overflow-x: auto;
-}
-
-.code-block code {
-    color: #d4d4d4;
-    font-family: Consolas, Monaco, monospace;
-    font-size: 14px;
-    white-space: pre;
 }
 
 .copy-btn {
@@ -80,8 +81,5 @@ button {
     font-size: 12px;
     cursor: pointer;
     opacity: 0.85;
-}
-
-.copy-btn:hover {
-    opacity: 1;
+    z-index: 10;
 }
