@@ -3,7 +3,6 @@ from groq import Groq
 import os
 import uuid
 
-
 app = Flask(__name__)
 app.secret_key = "s01_secret_key"
 
@@ -28,16 +27,17 @@ MAX_MESSAGES_PER_CHAT = 30
 
 @app.route("/")
 def index():
-    session.setdefault("chats", [])
+    if "chats" not in session:
+        session["chats"] = []
     return render_template("index.html")
 
 @app.get("/api/chats")
 def get_chats():
-    return jsonify(session["chats"])
+    return jsonify(session.get("chats", []))
 
 @app.post("/api/chats/new")
 def new_chat():
-    chats = session["chats"]
+    chats = session.get("chats", [])
 
     if len(chats) >= MAX_CHATS:
         return jsonify({"error": "Limite de chats atteinte"}), 400
@@ -56,7 +56,8 @@ def new_chat():
 @app.post("/api/chats/delete")
 def delete_chat():
     chat_id = request.json.get("chat_id")
-    session["chats"] = [c for c in session["chats"] if c["id"] != chat_id]
+    chats = session.get("chats", [])
+    session["chats"] = [c for c in chats if c["id"] != chat_id]
     session.modified = True
     return jsonify({"success": True})
 
@@ -64,19 +65,17 @@ def delete_chat():
 def chat():
     data = request.json
     chat_id = data.get("chat_id")
-    message = data.get("message", "").strip()
-
+    message = (data.get("message") or "").strip()
     if not message:
         return jsonify({"error": "Message vide"}), 400
 
-    chats = session["chats"]
+    chats = session.get("chats", [])
     chat = next((c for c in chats if c["id"] == chat_id), None)
-
     if not chat:
         return jsonify({"error": "Chat introuvable"}), 404
 
     if len(chat["messages"]) >= MAX_MESSAGES_PER_CHAT:
-        return jsonify({"error": "Limite de messages atteinte"}), 400
+        return jsonify({"error": f"Limite de {MAX_MESSAGES_PER_CHAT} messages atteinte"}), 400
 
     chat["messages"].append({"sender": "user", "text": message})
 
@@ -84,27 +83,29 @@ def chat():
         title_completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
+                {"role": "system", "content": BOT_PROMPT},
                 {"role": "user", "content": f"Donne un titre court (max 4 mots) pour : {message}"}
             ]
         )
         chat["name"] = title_completion.choices[0].message.content.strip()
 
+    recent_msgs = [{"role": "system", "content": BOT_PROMPT}] + [
+        {"role": "user" if m["sender"] == "user" else "assistant", "content": m["text"]}
+        for m in chat["messages"]
+    ]
+
     completion = client.chat.completions.create(
         model="llama-3.1-8b-instant",
-        messages=[
-            {"role": "system", "content": BOT_PROMPT},
-            *[
-                {"role": "user" if m["sender"] == "user" else "assistant", "content": m["text"]}
-                for m in chat["messages"]
-            ]
-        ]
+        messages=recent_msgs
     )
 
-    reply = completion.choices[0].message.content
+    reply = completion.choices[0].message.content.strip()
 
+    # supprime python ou python3 au début
     if reply.lower().startswith("python"):
-        reply = reply.split("\n", 1)[-1]
+        reply = "\n".join(reply.split("\n")[1:])
 
+    # nettoie retour chariot
     reply = reply.replace("\r\n", "\n").replace("\r", "\n")
 
     chat["messages"].append({"sender": "bot", "text": reply})
@@ -113,4 +114,3 @@ def chat():
     session.modified = True
 
     return jsonify({"reply": reply})
-
