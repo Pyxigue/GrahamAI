@@ -5,19 +5,24 @@
     <meta name="google-site-verification" content="iEr_MKIBkqw6bTzVhaTEnslOv7PwnxwLraFtm9ooDYU">
     <title>GrahamAI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='G.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-    <script>hljs.highlightAll();</script>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='G.png') }}">
 </head>
 <body>
-    <div class="chat-container">
-        <h2>GrahamAI</h2>
-        <div id="messages"></div>
+    <div class="main-container">
+        <div class="sidebar">
+            <button id="newChatBtn">+ Nouveau chat</button>
+            <ul id="chatList"></ul>
+        </div>
 
-        <div class="input-area">
-            <input id="messageInput" type="text" placeholder="Écris un message..." />
-            <button onclick="sendMessage()">Envoyer</button>
+        <div class="chat-container">
+            <h2>GrahamAI</h2>
+            <div id="messages"></div>
+            <div class="input-area">
+                <input id="messageInput" type="text" placeholder="Écris un message..." />
+                <button onclick="sendMessage()">Envoyer</button>
+            </div>
         </div>
     </div>
 
