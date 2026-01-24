@@ -1,9 +1,41 @@
+let chats = [];
+let currentChat = null;
+
+function newChat() {
+    const chat = { id: Date.now(), name: "Nouveau chat", messages: [] };
+    chats.push(chat);
+    currentChat = chat;
+    renderChatList();
+    renderMessages();
+}
+
+function renderChatList() {
+    const list = document.getElementById("chatList");
+    list.innerHTML = "";
+    chats.forEach(chat => {
+        const li = document.createElement("li");
+        li.textContent = chat.name;
+        if (chat === currentChat) li.classList.add("active");
+        li.onclick = () => { currentChat = chat; renderMessages(); renderChatList(); };
+        list.appendChild(li);
+    });
+}
+
+function renderMessages() {
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "";
+    if (!currentChat) return;
+    currentChat.messages.forEach(m => addMessage(m.sender, m.text));
+}
+
 async function sendMessage() {
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
     if (!text) return;
 
     addMessage("user", text);
+    if (currentChat) currentChat.messages.push({ sender: "user", text });
+
     input.value = "";
 
     const response = await fetch("/api/chat", {
@@ -14,13 +46,7 @@ async function sendMessage() {
 
     const data = await response.json();
     addMessage("bot", data.reply);
-}
-
-function escapeHTML(str) {
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+    if (currentChat) currentChat.messages.push({ sender: "bot", text: data.reply });
 }
 
 function addMessage(sender, text) {
@@ -34,7 +60,7 @@ function addMessage(sender, text) {
             return `
                 <div class="code-block">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code>${escapedCode}</code></pre>
+                    <pre><code class="language-js">${escapedCode}</code></pre>
                 </div>
             `;
         })
@@ -42,14 +68,20 @@ function addMessage(sender, text) {
         .replace(/_(.+?)_/g, "<em>$1</em>")
         .replace(/\n/g, "<br>");
 
-    const prefix = sender === "user"
-        ? "<b>You :</b> "
-        : "<b>GrahamAI :</b> ";
+    const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
 
     msg.innerHTML = prefix + formattedText;
-
     messagesDiv.appendChild(msg);
+
+    msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
+
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function escapeHTML(str) {
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;");
 }
 
 function copyCode(button) {
@@ -60,20 +92,8 @@ function copyCode(button) {
     });
 }
 
-document.getElementById("messageInput")
-    .addEventListener("keydown", e => {
-        if (e.key === "Enter") sendMessage();
-    });
+document.getElementById("messageInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+});
 
-return `
-    <div class="code-block">
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-        <pre><code class="language-js">${escapedCode}</code></pre>
-    </div>
-`;
-
-
-
-
-
-
+newChat();
