@@ -16,30 +16,17 @@
             <ul id="chatList"></ul>
         </div>
 
-        <div class="chat-container">
-            <h2>GrahamAI</h2>
-            <div id="messages"></div>
-            <div class="input-area">
-                <input id="messageInput" type="text" placeholder="Écris un message..." />
-                <button onclick="sendMessage()">Envoyer</button>
+        <div class="chat-wrapper">
+            <div class="chat-container">
+                <h2>GrahamAI</h2>
+                <div id="messages"></div>
+                <div class="input-area">
+                    <input id="messageInput" type="text" placeholder="Écris un message..." />
+                    <button onclick="sendMessage()">Envoyer</button>
+                </div>
             </div>
         </div>
     </div>
-
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
