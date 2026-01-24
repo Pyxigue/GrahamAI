@@ -163,22 +163,32 @@ function cleanMessage(text) {
     return text;
 }
 
-// ----- Formattage du texte et code pour HTML -----
 function formatMessage(text) {
     const parts = text.split(/(```[\s\S]+?```)/g);
     let formatted = "";
+
     parts.forEach(part => {
         if (part.startsWith("```") && part.endsWith("```")) {
             let code = part.slice(3, -3);
-            const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            formatted += `<div class="code-block">
-                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                            <pre><code>${escaped}</code></pre>
-                          </div>`;
+
+            code = code.replace(/^\s*[a-zA-Z0-9#+.-]+\s*\n/, "");
+
+            const escaped = code
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            formatted += `
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code>${escaped}</code></pre>
+                </div>
+            `;
         } else {
             formatted += part.replace(/\n/g, "<br>");
         }
     });
+
     return formatted;
 }
 
@@ -225,5 +235,6 @@ document.getElementById("newChatBtn").addEventListener("click", newChat);
 
 
 loadChats();
+
 
 
