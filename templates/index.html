@@ -21,7 +21,11 @@
             <h2>GrahamAI</h2>
             <div id="messages"></div>
             <div class="input-area">
-                <input id="messageInput" type="text" placeholder="Écris un message..." />
+                <textarea
+                    id="messageInput"
+                    placeholder="Écris ton message..."
+                    rows="2"
+                ></textarea>
                 <button onclick="sendMessage()">Envoyer</button>
             </div>
         </div>
@@ -30,3 +34,4 @@
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
+
