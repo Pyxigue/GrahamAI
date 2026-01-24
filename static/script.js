@@ -1,8 +1,7 @@
 let currentChat = null;
 let chats = [];
-let isGenerating = false;
+let typingInterval = null;
 
-// ---------------- INIT ----------------
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -10,16 +9,17 @@ async function loadChats() {
     if (!currentChat && chats.length > 0) selectChat(chats[0]);
 }
 
-// ---------------- CHAT CRUD ----------------
+
 async function newChat() {
     const res = await fetch("/api/chats/new", { method: "POST" });
     const chat = await res.json();
-    if (chat.error) return alert(chat.error);
+    if (chat.error) { alert(chat.error); return; }
     chats.push(chat);
     renderChatList();
     selectChat(chat);
     return chat;
 }
+
 
 async function deleteChat(chatId) {
     if (!confirm("Supprimer ce chat ?")) return;
@@ -29,179 +29,188 @@ async function deleteChat(chatId) {
         body: JSON.stringify({ chat_id: chatId })
     });
     chats = chats.filter(c => c.id !== chatId);
-    currentChat = chats[0] || null;
+    if (currentChat && currentChat.id === chatId) currentChat = null;
     renderChatList();
-    if (currentChat) renderMessages(currentChat.messages);
+    if (currentChat) selectChat(currentChat);
+    else showNoChatMessage();
 }
 
 function selectChat(chat) {
     currentChat = chat;
     renderChatList();
-    renderMessages(chat.messages);
+    if (chat.messages.length === 0) showNoChatMessage();
+    else renderMessages(chat.messages);
 }
 
-// ---------------- RENDER ----------------
+
+function showNoChatMessage() {
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = '<div class="no-chat-msg">Aucun chat sélectionné</div>';
+}
+
+
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
     chats.forEach(chat => {
         const li = document.createElement("li");
         li.className = currentChat && chat.id === currentChat.id ? "active" : "";
-        li.innerHTML = `<span>${chat.name}</span>`;
+
+        const titleSpan = document.createElement("span");
+        titleSpan.textContent = chat.name;
+        li.appendChild(titleSpan);
         li.onclick = () => selectChat(chat);
 
-        const del = document.createElement("button");
-        del.textContent = "🗑";
-        del.className = "delete-btn";
-        del.onclick = e => { e.stopPropagation(); deleteChat(chat.id); };
+        const delBtn = document.createElement("button");
+        delBtn.innerHTML = "🗑";
+        delBtn.className = "delete-btn";
+        delBtn.onclick = (e) => { e.stopPropagation(); deleteChat(chat.id); };
+        li.appendChild(delBtn);
 
-        li.appendChild(del);
         list.appendChild(li);
     });
 }
 
+
 function renderMessages(messages) {
-    const div = document.getElementById("messages");
-    div.innerHTML = "";
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "";
     messages.forEach(m => addMessage(m.sender, m.text));
 }
 
-// ---------------- SEND MESSAGE ----------------
-async function sendMessage() {
-    if (isGenerating) return;
 
+async function sendMessage() {
     let chat = currentChat;
-    if (!chat) chat = await newChat();
+    if (!chat) {
+        chat = await newChat();
+    }
+    if (chat.messages.length >= 30) { alert("Limite de 30 messages atteinte"); return; }
 
     const input = document.getElementById("messageInput");
-    const sendBtn = document.getElementById("sendBtn");
-
     const text = input.value.trim();
     if (!text) return;
-
     input.value = "";
+
     addMessage("user", text);
     chat.messages.push({ sender: "user", text });
-
-    isGenerating = true;
-    input.disabled = true;
-    sendBtn.disabled = true;
 
     const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: chat.id, message: text })
     });
-
     const data = await res.json();
-    if (data.error) return alert(data.error);
+    if (data.error) { alert(data.error); return; }
+
 
     await addMessageProgressive("bot", data.reply);
     chat.messages.push({ sender: "bot", text: data.reply });
 
-    renderChatList();
 
-    isGenerating = false;
-    input.disabled = false;
-    sendBtn.disabled = false;
-    input.focus();
+    if (chat.name === "Nouveau chat") progressiveRenameChat(chat);
 }
 
-// ---------------- MESSAGE DISPLAY ----------------
+
 function addMessage(sender, text) {
-    const div = document.getElementById("messages");
+    const messagesDiv = document.getElementById("messages");
     const msg = document.createElement("div");
     msg.className = "message " + sender;
 
-    msg.innerHTML = `<b>${sender === "user" ? "You" : "GrahamAI"} :</b> ${formatMessage(text)}`;
-    div.appendChild(msg);
-    div.scrollTo({ top: div.scrollHeight, behavior: "smooth" });
+    text = cleanMessage(text);
+
+    const formatted = formatMessage(text);
+    const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
+    msg.innerHTML = prefix + formatted;
+
+    messagesDiv.appendChild(msg);
+    msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
 
 async function addMessageProgressive(sender, text) {
-    const div = document.getElementById("messages");
+    const messagesDiv = document.getElementById("messages");
     const msg = document.createElement("div");
-    msg.className = "message bot";
-    msg.innerHTML = "<b>GrahamAI :</b> <span class='progress'></span>";
-    div.appendChild(msg);
+    msg.className = "message " + sender;
+    const prefix = "<b>GrahamAI :</b> ";
+    msg.innerHTML = prefix + "<span class='progress-text'></span>";
+    messagesDiv.appendChild(msg);
 
-    const span = msg.querySelector(".progress");
+    const span = msg.querySelector(".progress-text");
+
+    text = cleanMessage(text);
+
     let i = 0;
-
     while (i <= text.length) {
         span.innerHTML = formatMessage(text.slice(0, i));
-        div.scrollTop = div.scrollHeight;
-
-        const delay = Math.max(5, 40 - Math.floor(text.length / 20));
-        await new Promise(r => setTimeout(r, delay));
+        msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
         i++;
+        await new Promise(r => setTimeout(r, 15));
     }
 }
 
-// ---------------- MARKDOWN + CODE ----------------
+
+function cleanMessage(text) {
+    text = text.replace(/^python\s*#?/i, "");
+    text = text.replace(/^[#*]\s*/gm, ""); 
+    text = text.replace(/\r\n|\r/g, "\n");
+    return text;
+}
+
+// ----- Formattage du texte et code pour HTML -----
 function formatMessage(text) {
-    let html = "";
-    let inCode = false;
-    let buffer = "";
-
-    for (let line of text.split("\n")) {
-        if (line.startsWith("```")) {
-            if (!inCode) {
-                inCode = true;
-                buffer = "";
-                html += `
-                <div class="code-block">
-                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code>`;
-            } else {
-                inCode = false;
-                html += escapeHtml(buffer) + "</code></pre></div>";
-            }
-            continue;
-        }
-
-        if (inCode) {
-            buffer += line + "\n";
+    const parts = text.split(/(```[\s\S]+?```)/g);
+    let formatted = "";
+    parts.forEach(part => {
+        if (part.startsWith("```") && part.endsWith("```")) {
+            let code = part.slice(3, -3);
+            const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            formatted += `<div class="code-block">
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            <pre><code>${escaped}</code></pre>
+                          </div>`;
         } else {
-            html += parseMarkdown(line) + "<br>";
+            formatted += part.replace(/\n/g, "<br>");
         }
-    }
-
-    if (inCode) {
-        html += escapeHtml(buffer) + "</code></pre></div>";
-    }
-
-    return html;
+    });
+    return formatted;
 }
 
-function parseMarkdown(text) {
-    return text
-        .replace(/\*\*\*(.+?)\*\*\*/g, "<b><i>$1</i></b>")
-        .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-        .replace(/\*(.+?)\*/g, "<i>$1</i>");
-}
-
-function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
 
 function copyCode(btn) {
-    let code = btn.parentElement.querySelector("code").innerText;
-    code = code.replace(/^\w+\n/, "");
-    navigator.clipboard.writeText(code);
+    const code = btn.parentElement.querySelector("code").innerText;
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 1500);
+    });
 }
 
-// ---------------- EVENTS ----------------
+
+function progressiveRenameChat(chat) {
+    let name = chat.name;
+    let i = 0;
+    const li = [...document.getElementById("chatList").children].find(
+        el => el.textContent.startsWith(chat.name) || el.classList.contains("active")
+    );
+    const interval = setInterval(() => {
+        if (i > name.length) clearInterval(interval);
+        if (li) li.querySelector("span").textContent = name.slice(0, i);
+        i++;
+    }, 50);
+}
+
+
 const input = document.getElementById("messageInput");
 input.addEventListener("keydown", e => {
-    if (isGenerating) return;
     if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
     }
+
 });
 
-document.getElementById("sendBtn").onclick = sendMessage;
-document.getElementById("newChatBtn").onclick = newChat;
+document.getElementById("newChatBtn").addEventListener("click", newChat);
+
 
 loadChats();
