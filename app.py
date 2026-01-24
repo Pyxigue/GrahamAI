@@ -22,11 +22,12 @@ BOT_PROMPT = (
 )
 
 MAX_CHATS = 30
-MAX_MESSAGES = 30
+MAX_MESSAGES_PER_CHAT = 30
 
 @app.route("/")
 def index():
-    session.setdefault("chats", [])
+    if "chats" not in session:
+        session["chats"] = []
     return render_template("index.html")
 
 @app.get("/api/chats")
@@ -35,63 +36,70 @@ def get_chats():
 
 @app.post("/api/chats/new")
 def new_chat():
-    chats = session["chats"]
+    chats = session.get("chats", [])
     if len(chats) >= MAX_CHATS:
-        return jsonify({"error": "Limite de chats atteinte"}), 400
+        return jsonify({"error": f"Limite atteinte ({MAX_CHATS} chats)"}), 400
 
-    chat = {"id": len(chats) + 1, "name": "Nouveau chat", "messages": []}
+    chat_id = len(chats) + 1
+    chat = {"id": chat_id, "name": "Nouveau chat", "messages": []}
     chats.append(chat)
+    session["chats"] = chats
     session.modified = True
     return jsonify(chat)
 
 @app.post("/api/chats/delete")
 def delete_chat():
-    chat_id = request.json.get("chat_id")
-    session["chats"] = [c for c in session["chats"] if c["id"] != chat_id]
+    data = request.json or {}
+    chat_id = data.get("chat_id")
+    chats = session.get("chats", [])
+    chats = [c for c in chats if c["id"] != chat_id]
+    session["chats"] = chats
     session.modified = True
     return jsonify({"success": True})
 
 @app.post("/api/chat")
 def chat():
-    data = request.json
+    data = request.json or {}
     chat_id = data.get("chat_id")
     message = data.get("message", "").strip()
 
-    chat = next((c for c in session["chats"] if c["id"] == chat_id), None)
-    if not chat or not message:
-        return jsonify({"error": "Chat invalide"}), 400
+    if not message or chat_id is None:
+        return jsonify({"error": "Message vide ou chat_id manquant"}), 400
 
-    if len(chat["messages"]) >= MAX_MESSAGES:
-        return jsonify({"error": "Limite de messages atteinte"}), 400
+    chats = session.get("chats", [])
+    chat = next((c for c in chats if c["id"] == chat_id), None)
+    if not chat:
+        return jsonify({"error": "Chat introuvable"}), 404
+
+    if len(chat["messages"]) >= MAX_MESSAGES_PER_CHAT:
+        return jsonify({"error": f"Limite de {MAX_MESSAGES_PER_CHAT} messages atteinte"}), 400
 
     chat["messages"].append({"sender": "user", "text": message})
 
     if chat["name"] == "Nouveau chat":
-        title_prompt = f"Donne un titre MAX 5 mots, sans guillemets:\n{message}"
-        title = client.chat.completions.create(
+        title_prompt = f"Donne un titre de moins de 5 mots pour ce chat:\n{message}"
+        title_completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": BOT_PROMPT},
-                {"role": "user", "content": title_prompt}
-            ]
-        ).choices[0].message.content.strip()
-        chat["name"] = " ".join(title.split()[:5])
+            messages=[{"role": "system", "content": BOT_PROMPT},
+                      {"role": "user", "content": title_prompt}]
+        )
+        chat["name"] = title_completion.choices[0].message.content.strip()
 
-    messages = [{"role": "system", "content": BOT_PROMPT}]
-    for m in chat["messages"]:
-        messages.append({
-            "role": "user" if m["sender"] == "user" else "assistant",
-            "content": m["text"]
-        })
+    recent_msgs = [{"role": "system", "content": BOT_PROMPT}] + [
+        {"role": "user" if m["sender"] == "user" else "assistant", "content": m["text"]}
+        for m in chat["messages"]
+    ]
 
     completion = client.chat.completions.create(
         model="llama-3.1-8b-instant",
-        messages=messages
+        messages=recent_msgs
     )
 
     reply = completion.choices[0].message.content.strip()
-    chat["messages"].append({"sender": "bot", "text": reply})
-    session.modified = True
+    reply = reply.lstrip("python").lstrip("#").replace("\r\n", "\n").replace("\r", "\n")
 
+    chat["messages"].append({"sender": "bot", "text": reply})
+    session["chats"] = chats
+    session.modified = True
     return jsonify({"reply": reply})
 
