@@ -65,6 +65,15 @@ document.getElementById("messageInput")
         if (e.key === "Enter") sendMessage();
     });
 
+return `
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><code class="language-js">${escapedCode}</code></pre>
+    </div>
+`;
+
+
+
 
 
 
