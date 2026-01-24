@@ -6,7 +6,9 @@ async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
     renderChatList();
-    if (!currentChat && chats.length > 0) selectChat(chats[0]);
+    let lastId = localStorage.getItem("lastChatId");
+    let chat = chats.find(c => c.id === lastId) || chats[0];
+    if (chat) selectChat(chat);
 }
 
 async function newChat() {
@@ -35,6 +37,7 @@ async function deleteChat(chatId) {
 
 function selectChat(chat) {
     currentChat = chat;
+    localStorage.setItem("lastChatId", chat.id);
     renderChatList();
     if (chat.messages.length === 0) showNoChatMessage();
     else renderMessages(chat.messages);
@@ -94,12 +97,14 @@ async function sendMessage() {
     const data = await res.json();
     if (data.error) { alert(data.error); generating = false; toggleInput(false); return; }
 
+    chat = data.chat;
     await addMessageProgressive("bot", data.reply);
-    chat.messages.push({ sender: "bot", text: data.reply });
+
     if (chat.name === "Nouveau chat") progressiveRenameChat(chat);
 
     generating = false;
     toggleInput(false);
+    selectChat(chat);
 }
 
 function toggleInput(disable) {
@@ -162,7 +167,7 @@ async function addMessageProgressive(sender, text) {
         codeBlock.innerHTML = text.slice(0, i).replace(/\n/g, "<br>");
         msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        let speed = Math.max(5, 20 - Math.floor(i / 10)); // plus long, plus lent
+        let speed = Math.max(5, 20 - Math.floor(i / 10));
         await new Promise(r => setTimeout(r, speed));
         i++;
     }
