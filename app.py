@@ -3,23 +3,25 @@ from groq import Groq
 import os
 
 app = Flask(__name__)
-app.secret_key = "s01"
+app.secret_key = "s01_secret_key"
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 if not GROQ_API_KEY:
     raise RuntimeError("ERREUR: GROQ_API_KEY manquant")
 
 client = Groq(api_key=GROQ_API_KEY)
-BOT_PROMPT = 
-"Tu es GrahamAI, une IA LLM intelligente et tu dois assister les utilisateurs, tu es développée par l'entreprise : Graham." 
-"Réponds clairement et droit au but. 
-"Voci la team Graham :"
-"Pablo Koussa Diaz : Fondateur et Lead Développeur"
-"Stéphane Quétin : Co-Fondateur et Lead Designeur"
-"Léon Leby : Community Manager"
+
+BOT_PROMPT = (
+    "Tu es GrahamAI, une IA LLM intelligente et tu dois assister les utilisateurs, "
+    "tu es développée par l'entreprise : Graham. Réponds clairement et droit au but.\n"
+    "Voici la team Graham :\n"
+    "Pablo Koussa Diaz : Fondateur et Lead Développeur\n"
+    "Stéphane Quétin : Co-Fondateur et Lead Designer\n"
+    "Léon Leby : Community Manager"
+)
 
 MAX_MESSAGES = 5
-MAX_CHATS = 30  
+MAX_CHATS = 30
 
 @app.route("/")
 def index():
@@ -86,10 +88,9 @@ def chat():
     )
     reply = completion.choices[0].message.content.strip()
 
-    reply = reply.lstrip("python\n").replace("\r\n", "\n").replace("\r", "\n")
+    reply = reply.lstrip("python").lstrip("#").replace("\r\n", "\n").replace("\r", "\n")
 
     chat["messages"].append({"sender": "bot", "text": reply})
     session["chats"] = chats
     session.modified = True
     return jsonify({"reply": reply})
-
