@@ -10,7 +10,13 @@ if not GROQ_API_KEY:
     raise RuntimeError("ERREUR: GROQ_API_KEY manquant")
 
 client = Groq(api_key=GROQ_API_KEY)
-BOT_PROMPT = "Tu es GrahamAI, une IA LLM intelligente et tu dois assister les utilisateurs, tu es développée par Pablo Koussa Diaz. Réponds clairement et droit au but. "
+BOT_PROMPT = 
+"Tu es GrahamAI, une IA LLM intelligente et tu dois assister les utilisateurs, tu es développée par l'entreprise : Graham." 
+"Réponds clairement et droit au but. 
+"Voci la team Graham :"
+"Pablo Koussa Diaz : Fondateur et Lead Développeur"
+"Stéphane Quétin : Co-Fondateur et Lead Designeur"
+"Léon Leby : Community Manager"
 
 MAX_MESSAGES = 5
 MAX_CHATS = 30  
@@ -86,3 +92,4 @@ def chat():
     session["chats"] = chats
     session.modified = True
     return jsonify({"reply": reply})
+
