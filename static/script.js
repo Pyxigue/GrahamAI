@@ -102,9 +102,14 @@ async function sendMessage() {
     const data = await res.json();
     if (data.error) { alert(data.error); return; }
 
-
     await addMessageProgressive("bot", data.reply);
     chat.messages.push({ sender: "bot", text: data.reply });
+
+    if (data.chat_name && chat.name !== data.chat_name) {
+        chat.name = data.chat_name;
+        renderChatList();
+    }
+
 
 
     if (chat.name === "Nouveau chat") progressiveRenameChat(chat);
@@ -220,4 +225,5 @@ document.getElementById("newChatBtn").addEventListener("click", newChat);
 
 
 loadChats();
+
 
