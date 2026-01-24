@@ -1,52 +1,65 @@
-let chats = [];
 let currentChat = null;
 
-function newChat() {
-    const chat = { id: Date.now(), name: "Nouveau chat", messages: [] };
-    chats.push(chat);
-    currentChat = chat;
-    renderChatList();
-    renderMessages();
+async function loadChats() {
+    const res = await fetch("/api/chats");
+    const chats = await res.json();
+    renderChatList(chats);
+    if (chats.length > 0) {
+        selectChat(chats[0]);
+    }
 }
 
-function renderChatList() {
+
+async function newChat() {
+    const res = await fetch("/api/chats/new", { method: "POST" });
+    const chat = await res.json();
+    loadChats(); 
+    selectChat(chat);
+}
+
+// sélectionner un chat
+function selectChat(chat) {
+    currentChat = chat;
+    renderMessages(chat.messages);
+}
+
+
+function renderChatList(chats) {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
     chats.forEach(chat => {
         const li = document.createElement("li");
         li.textContent = chat.name;
-        if (chat === currentChat) li.classList.add("active");
-        li.onclick = () => { currentChat = chat; renderMessages(); renderChatList(); };
+        if (currentChat && chat.id === currentChat.id) li.classList.add("active");
+        li.onclick = () => selectChat(chat);
         list.appendChild(li);
     });
 }
 
-function renderMessages() {
+
+function renderMessages(messages) {
     const messagesDiv = document.getElementById("messages");
     messagesDiv.innerHTML = "";
-    if (!currentChat) return;
-    currentChat.messages.forEach(m => addMessage(m.sender, m.text));
+    messages.forEach(m => addMessage(m.sender, m.text));
 }
+
 
 async function sendMessage() {
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
-    if (!text) return;
+    if (!text || !currentChat) return;
 
     addMessage("user", text);
-    if (currentChat) currentChat.messages.push({ sender: "user", text });
-
     input.value = "";
 
-    const response = await fetch("/api/chat", {
+    const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ chat_id: currentChat.id, message: text })
     });
-
-    const data = await response.json();
+    const data = await res.json();
     addMessage("bot", data.reply);
-    if (currentChat) currentChat.messages.push({ sender: "bot", text: data.reply });
+    loadChats();
 }
 
 function addMessage(sender, text) {
@@ -56,39 +69,29 @@ function addMessage(sender, text) {
 
     let formattedText = text
         .replace(/```([\s\S]+?)```/g, (match, code) => {
-            const escapedCode = escapeHTML(code);
+            const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             return `
                 <div class="code-block">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code class="language-js">${escapedCode}</code></pre>
+                    <pre><code class="language-js">${escaped}</code></pre>
                 </div>
             `;
         })
-        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-        .replace(/_(.+?)_/g, "<em>$1</em>")
-        .replace(/\n/g, "<br>");
+        .replace(/\n/g, "<br>"); 
 
     const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
-
     msg.innerHTML = prefix + formattedText;
     messagesDiv.appendChild(msg);
 
     msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
-
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-function escapeHTML(str) {
-    return str.replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;");
-}
-
-function copyCode(button) {
-    const code = button.parentElement.querySelector("code").innerText;
+function copyCode(btn) {
+    const code = btn.parentElement.querySelector("code").innerText;
     navigator.clipboard.writeText(code).then(() => {
-        button.textContent = "Copied!";
-        setTimeout(() => button.textContent = "Copy", 1500);
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 1500);
     });
 }
 
@@ -96,4 +99,5 @@ document.getElementById("messageInput").addEventListener("keydown", e => {
     if (e.key === "Enter") sendMessage();
 });
 
-newChat();
+document.getElementById("newChatBtn").addEventListener("click", newChat);
+loadChats();
