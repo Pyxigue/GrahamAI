@@ -64,7 +64,7 @@ function addMessage(sender, text) {
     const msg = document.createElement("div");
     msg.className = "message " + sender;
 
-    text = text.replace(/^python\s*\n?/, "");
+    text = text.replace(/^python\s*#?/i, "").replace(/\r\n|\r/g, "\n");
 
     let formattedText = text.replace(/```([\s\S]+?)```/g, (match, code) => {
         const escaped = code
@@ -80,9 +80,7 @@ function addMessage(sender, text) {
         `;
     });
 
-    formattedText = formattedText.replace(/((?!<div class="code-block">)[\s\S]+)/g, (m) =>
-        m.replace(/\n/g, "<br>")
-    );
+    formattedText = formattedText.replace(/((?!<div class="code-block">)[\s\S]+)/g, (m) => m.replace(/\n/g, "<br>"));
 
     const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
     msg.innerHTML = prefix + formattedText;
@@ -94,7 +92,6 @@ function addMessage(sender, text) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-
 function copyCode(btn){
     const code=btn.parentElement.querySelector("code").innerText;
     navigator.clipboard.writeText(code).then(()=>{ btn.textContent="Copied!"; setTimeout(()=>btn.textContent="Copy",1500); });
@@ -103,4 +100,3 @@ function copyCode(btn){
 document.getElementById("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter") sendMessage();});
 document.getElementById("newChatBtn").addEventListener("click",newChat);
 loadChats();
-
