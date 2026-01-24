@@ -1,16 +1,14 @@
 let currentChat = null;
 let chats = [];
+let typingInterval = null;
 
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
     renderChatList();
-    if (!currentChat && chats.length > 0) {
-        selectChat(chats[0]);
-    } else if (!currentChat) {
-        showNoChatMessage();
-    }
+    if (!currentChat && chats.length > 0) selectChat(chats[0]);
 }
+
 
 async function newChat() {
     const res = await fetch("/api/chats/new", { method: "POST" });
@@ -19,7 +17,9 @@ async function newChat() {
     chats.push(chat);
     renderChatList();
     selectChat(chat);
+    return chat;
 }
+
 
 async function deleteChat(chatId) {
     if (!confirm("Supprimer ce chat ?")) return;
@@ -35,19 +35,17 @@ async function deleteChat(chatId) {
     else showNoChatMessage();
 }
 
+
 function selectChat(chat) {
     currentChat = chat;
     renderChatList();
-    if (chat.messages.length === 0) {
-        showNoChatMessage();
-    } else {
-        renderMessages(chat.messages);
-    }
+    if (chat.messages.length === 0) showNoChatMessage();
+    else renderMessages(chat.messages);
 }
 
 function showNoChatMessage() {
     const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = '<div class="no-chat-msg">Choisir ou créer un chat</div>';
+    messagesDiv.innerHTML = '<div class="no-chat-msg">Aucun chat sélectionné</div>';
 }
 
 function renderChatList() {
@@ -56,7 +54,7 @@ function renderChatList() {
     chats.forEach(chat => {
         const li = document.createElement("li");
         li.className = currentChat && chat.id === currentChat.id ? "active" : "";
-        
+
         const titleSpan = document.createElement("span");
         titleSpan.textContent = chat.name;
         li.appendChild(titleSpan);
@@ -72,17 +70,19 @@ function renderChatList() {
     });
 }
 
-
 function renderMessages(messages) {
     const messagesDiv = document.getElementById("messages");
     messagesDiv.innerHTML = "";
     messages.forEach(m => addMessage(m.sender, m.text));
 }
 
-
 async function sendMessage() {
-    if (!currentChat) { alert("Sélectionne un chat ou crée-en un"); return; }
-    if (currentChat.messages.length >= 30) { alert("Limite de 30 messages atteinte"); return; }
+    let chat = currentChat;
+    if (!chat) {
+
+        chat = await newChat();
+    }
+    if (chat.messages.length >= 30) { alert("Limite de 30 messages atteinte"); return; }
 
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
@@ -90,32 +90,78 @@ async function sendMessage() {
     input.value = "";
 
     addMessage("user", text);
-    currentChat.messages.push({ sender: "user", text });
+    chat.messages.push({ sender: "user", text });
 
     const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: currentChat.id, message: text })
+        body: JSON.stringify({ chat_id: chat.id, message: text })
     });
     const data = await res.json();
     if (data.error) { alert(data.error); return; }
 
-    addMessage("bot", data.reply);
-    currentChat.messages.push({ sender: "bot", text: data.reply });
+    await addMessageProgressive("bot", data.reply);
+    chat.messages.push({ sender: "bot", text: data.reply });
+
+
+    if (chat.name === "Nouveau chat") progressiveRenameChat(chat);
 }
+
 
 function addMessage(sender, text) {
     const messagesDiv = document.getElementById("messages");
     const msg = document.createElement("div");
     msg.className = "message " + sender;
 
-    text = text.replace(/^python\s*#?/i, "").replace(/\r\n|\r/g, "\n");
+    text = cleanMessage(text);
 
+    const formatted = formatMessage(text);
+    const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
+    msg.innerHTML = prefix + formatted;
+
+    messagesDiv.appendChild(msg);
+    msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+
+async function addMessageProgressive(sender, text) {
+    const messagesDiv = document.getElementById("messages");
+    const msg = document.createElement("div");
+    msg.className = "message " + sender;
+    const prefix = "<b>GrahamAI :</b> ";
+    msg.innerHTML = prefix + "<span class='progress-text'></span>";
+    messagesDiv.appendChild(msg);
+
+    const span = msg.querySelector(".progress-text");
+
+    text = cleanMessage(text);
+
+    let i = 0;
+    while (i <= text.length) {
+        span.innerHTML = formatMessage(text.slice(0, i));
+        msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        i++;
+        await new Promise(r => setTimeout(r, 15)); 
+    }
+}
+
+
+function cleanMessage(text) {
+    text = text.replace(/^python\s*#?/i, "");
+    text = text.replace(/^[#*]\s*/gm, ""); 
+    text = text.replace(/\r\n|\r/g, "\n");
+    return text;
+}
+
+// ----- Formattage du texte et code pour HTML -----
+function formatMessage(text) {
     const parts = text.split(/(```[\s\S]+?```)/g);
     let formatted = "";
     parts.forEach(part => {
         if (part.startsWith("```") && part.endsWith("```")) {
-            let code = part.slice(3, -3); // retirer ```
+            let code = part.slice(3, -3);
             const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             formatted += `<div class="code-block">
                             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -125,16 +171,9 @@ function addMessage(sender, text) {
             formatted += part.replace(/\n/g, "<br>");
         }
     });
-
-    const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
-    msg.innerHTML = prefix + formatted;
-
-    messagesDiv.appendChild(msg);
-
-    msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
-
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    return formatted;
 }
+
 
 function copyCode(btn) {
     const code = btn.parentElement.querySelector("code").innerText;
@@ -144,9 +183,30 @@ function copyCode(btn) {
     });
 }
 
-document.getElementById("messageInput").addEventListener("keydown", e => {
-    if (e.key === "Enter") sendMessage();
+
+function progressiveRenameChat(chat) {
+    let name = chat.name;
+    let i = 0;
+    const li = [...document.getElementById("chatList").children].find(
+        el => el.textContent.startsWith(chat.name) || el.classList.contains("active")
+    );
+    const interval = setInterval(() => {
+        if (i > name.length) clearInterval(interval);
+        if (li) li.querySelector("span").textContent = name.slice(0, i);
+        i++;
+    }, 50);
+}
+
+
+const input = document.getElementById("messageInput");
+input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+
 });
+
 document.getElementById("newChatBtn").addEventListener("click", newChat);
 
 loadChats();
