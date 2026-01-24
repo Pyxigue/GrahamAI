@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify, session
 from groq import Groq
 import os
+import uuid
+
 
 app = Flask(__name__)
 app.secret_key = "s01_secret_key"
@@ -111,3 +113,4 @@ def chat():
     session.modified = True
 
     return jsonify({"reply": reply})
+
