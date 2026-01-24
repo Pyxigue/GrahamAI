@@ -4,9 +4,7 @@ async function loadChats() {
     const res = await fetch("/api/chats");
     const chats = await res.json();
     renderChatList(chats);
-    if (chats.length > 0) {
-        selectChat(chats[0]);
-    }
+    if (chats.length > 0 && !currentChat) selectChat(chats[0]);
 }
 
 
@@ -17,7 +15,7 @@ async function newChat() {
     selectChat(chat);
 }
 
-// sélectionner un chat
+
 function selectChat(chat) {
     currentChat = chat;
     renderMessages(chat.messages);
@@ -67,23 +65,33 @@ function addMessage(sender, text) {
     const msg = document.createElement("div");
     msg.className = "message " + sender;
 
-    let formattedText = text
-        .replace(/```([\s\S]+?)```/g, (match, code) => {
-            const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            return `
-                <div class="code-block">
-                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code class="language-js">${escaped}</code></pre>
-                </div>
-            `;
-        })
-        .replace(/\n/g, "<br>"); 
+
+    text = text.replace(/^python\s*\n/, "");
+
+    let formattedText = text.replace(/```([\s\S]+?)```/g, (match, code) => {
+        const escaped = code
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\n/g, "<br>");
+
+        return `
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre><code class="language-js">${escaped}</code></pre>
+            </div>
+        `;
+    });
+
+    formattedText = formattedText.replace(/\n/g, "<br>");
 
     const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
     msg.innerHTML = prefix + formattedText;
+
     messagesDiv.appendChild(msg);
 
     msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
+
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
@@ -100,4 +108,7 @@ document.getElementById("messageInput").addEventListener("keydown", e => {
 });
 
 document.getElementById("newChatBtn").addEventListener("click", newChat);
+
 loadChats();
+
+
