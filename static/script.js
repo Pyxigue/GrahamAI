@@ -45,8 +45,9 @@ function selectChat(chat) {
 
 function showNoChatMessage() {
     const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = '<div class="no-chat-msg">Aucun chat sélectionné</div>';
+    messagesDiv.innerHTML = "";
 }
+
 
 
 function renderChatList() {
@@ -235,6 +236,7 @@ document.getElementById("newChatBtn").addEventListener("click", newChat);
 
 
 loadChats();
+
 
 
 
