@@ -90,6 +90,7 @@ body {
   border-radius: 8px;
   margin-bottom: 15px;
 }
+
 textarea {
   flex: 1;
   padding: 12px;
@@ -100,9 +101,12 @@ textarea {
   font-size: 14px;
   resize: none;
   transition: all 0.2s;
-  max-height: 150px; 
-  overflow-y: auto; 
+  max-height: 150px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  height: auto;
 }
+
 
 textarea:focus {
   outline: none;
@@ -113,14 +117,14 @@ textarea:focus {
 .input-area {
   display: flex;
   gap: 10px;
-  align-items: stretch; 
+  align-items: stretch;
 }
 
 #sendBtn {
   padding: 0 18px;
   background: #4dabf7;
   border: none;
-  border-radius: 25%;
+  border-radius: 25px;
   cursor: pointer;
   font-size: 18px;
   display: flex;
@@ -128,6 +132,8 @@ textarea:focus {
   justify-content: center;
   transition: all 0.2s;
   height: auto;
+  align-self: stretch;
+  box-sizing: border-box;
 }
 
 #sendBtn:disabled {
@@ -196,6 +202,7 @@ textarea:focus {
 .copy-btn:hover {
   opacity: 1;
 }
+
 
 
 
