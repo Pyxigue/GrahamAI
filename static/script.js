@@ -2,7 +2,7 @@ let currentChat = null;
 let chats = [];
 let isAITyping = false;
 
-// ----------------- CHATS -----------------
+
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -71,7 +71,6 @@ function renderChatList() {
     });
 }
 
-// ----------------- MESSAGES -----------------
 function renderMessages(messages) {
     const div = document.getElementById("messages");
     div.innerHTML = "";
@@ -117,7 +116,6 @@ async function sendMessage() {
     setSendingState(false);
 }
 
-// ----------------- AJOUT MESSAGES -----------------
 function addMessage(sender, text) {
     const div = document.getElementById("messages");
     const msg = document.createElement("div");
@@ -143,7 +141,7 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         el => el.classList.contains("active")
     ) : null;
 
-    // Texte progressif avant code
+
     if (beforeCode.trim()) {
         const msg = document.createElement("div");
         msg.className = "message-bubble " + sender;
@@ -171,42 +169,27 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         }
     }
 
-    // Bloc code immédiat
+
     if (codeBlock) addMessage(sender, codeBlock);
 
-    // Texte après code
     const afterCode = codeMatch ? text.slice(codeMatch.index + codeMatch[0].length) : "";
     if (afterCode.trim()) addMessage(sender, afterCode);
 }
 
-// ----------------- FORMATAGE -----------------
 function cleanMessage(text) {
     return text.replace(/\r\n|\r/g, "\n");
 }
 
 function formatMessage(text) {
-    // Code inline
     text = text.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-
-    // Gras
     text = text.replace(/\*\*([^\*\n]+)\*\*/g, '<b>$1</b>');
-
-    // Italique
     text = text.replace(/\*([^\*\n]+)\*/g, '<i>$1</i>');
-
-    // Titres
     text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
     text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>');
     text = text.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-    // Listes à puces
     text = text.replace(/^\* (.+)$/gm, '<li>$1</li>');
     if (text.includes("<li>")) text = `<ul>${text}</ul>`;
-
-    // Retours à la ligne
     text = text.replace(/\n/g, "<br>");
-
-    // Bloc code ```
     text = text.replace(/```([\s\S]+?)```/g, (m, code) => {
         code = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return `
@@ -226,7 +209,6 @@ function copyCode(btn) {
     setTimeout(() => btn.textContent = "Copy", 1500);
 }
 
-// ----------------- RENOMMAGE CHAT PROGRESSIF -----------------
 function progressiveRenameChat(chat) {
     const li = [...document.getElementById("chatList").children].find(
         el => el.querySelector("span").textContent === chat.name
@@ -243,7 +225,6 @@ function progressiveRenameChat(chat) {
     }, 40);
 }
 
-// ----------------- ÉTAT D’ENVOI -----------------
 function setSendingState(state) {
     isAITyping = state;
     const btn = document.getElementById("sendBtn");
@@ -251,7 +232,6 @@ function setSendingState(state) {
     btn.classList.toggle("disabled", state);
 }
 
-// ----------------- INPUT -----------------
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 
@@ -273,5 +253,5 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 
-// ----------------- INIT -----------------
 loadChats();
+
