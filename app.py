@@ -22,7 +22,7 @@ BOT_PROMPT = (
     "Répond toujours dans la langue du message de l'utilisateur. Identifie la langue automatiquement."
 )
 
-MAX_CHATS = 30
+MAX_CHATS = 60
 MAX_MESSAGES_PER_CHAT = 30
 
 @app.route("/")
@@ -137,6 +137,7 @@ def chat():
         "reply": reply,
         "chat_name": chat["name"]
     })
+
 
 
 
