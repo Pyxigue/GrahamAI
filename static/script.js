@@ -4,7 +4,6 @@ let isAITyping = false;
 let typingToken = 0;
 
 
-// -------------------- Utils --------------------
 function typeTextProgressive(el, text, speed = 40) {
     el.textContent = "";
     let i = 0;
@@ -15,7 +14,6 @@ function typeTextProgressive(el, text, speed = 40) {
     }, speed);
 }
 
-// -------------------- Chats --------------------
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -65,8 +63,6 @@ function selectChat(chat) {
     updateChatTitleProgressive(chat.name || "Nouveau chat");
 }
 
-
-// -------------------- Titre progressif --------------------
 let currentTitleInterval = null;
 function updateChatTitleProgressive(title) {
     const el = document.getElementById("chatTitle");
@@ -83,7 +79,6 @@ function updateChatTitleProgressive(title) {
     }, 50);
 }
 
-// -------------------- Sidebar --------------------
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
@@ -117,7 +112,6 @@ function renderChatList() {
     });
 }
 
-// -------------------- Messages --------------------
 function clearMessages() {
     document.getElementById("messages").innerHTML = "";
 }
@@ -136,7 +130,7 @@ async function sendMessage() {
     let text = input.value.trim();
     if (!text) return;
 
-    // Auto wrap HTML
+
     if (/<[^>]+>/.test(text)) {
         text = "```html\n" + text + "\n```";
     }
@@ -209,7 +203,7 @@ async function addMessageProgressive(sender, text) {
 }
 
 
-// -------------------- Formatage --------------------
+
 function cleanMessage(text) {
     return text.replace(/\r\n|\r/g, "\n");
 }
@@ -232,7 +226,6 @@ function formatMessage(text) {
     if (text.includes("<li>")) text = `<ul>${text}</ul>`;
     text = text.replace(/\n/g, "<br>");
 
-    // Remplacement des placeholders par les blocs de code réels
     text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
         const { lang, code } = codeBlocks[index];
 
@@ -251,7 +244,6 @@ function formatMessage(text) {
     return text;
 }
 
-// -------------------- Copy code --------------------
 function copyCode(btn) {
     const codeElement = btn.parentElement.querySelector("code");
     if (!codeElement) return;
@@ -266,7 +258,6 @@ function copyCode(btn) {
     });
 }
 
-// -------------------- UI --------------------
 function setSendingState(state) {
     isAITyping = state;
     const btn = document.getElementById("sendBtn");
@@ -295,7 +286,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 
-// Chargement initial
 loadChats();
+
 
 
