@@ -204,35 +204,28 @@ function cleanMessage(text) {
 
 function formatMessage(text) {
     const codeBlocks = [];
-
     text = text.replace(/```(\w+)?\n([\s\S]+?)```/g, (m, lang, code) => {
         codeBlocks.push({ lang: lang || "code", code });
         return `___CODEBLOCK_${codeBlocks.length - 1}___`;
     });
-    text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
 
+    text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
     text = text.replace(/\*\*([^\*\n]+)\*\*/g, "<b>$1</b>");
     text = text.replace(/\*([^\*\n]+)\*/g, "<i>$1</i>");
-
     text = text.replace(/^### (.+)$/gm, "<h3>$1</h3>");
     text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
     text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
-
     text = text.replace(/^\* (.+)$/gm, "<li>$1</li>");
     if (text.includes("<li>")) text = `<ul>${text}</ul>`;
-
     text = text.replace(/\n/g, "<br>");
 
-        text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
-        let code = codeBlocks[index]
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+    text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
+        let { lang, code } = codeBlocks[index];
 
-        const lang = getCodeLang(code);
+        code = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
         const lines = code.split("\n");
-        if (lines[0].toLowerCase() === lang) lines.shift();
+        if (lines[0].trim().toLowerCase() === lang) lines.shift();
         code = lines.join("\n");
 
         return `<div class="code-block">
@@ -241,6 +234,10 @@ function formatMessage(text) {
             <pre><code class="language-${lang}">${code}</code></pre>
         </div>`;
     });
+
+    return text;
+}
+
 
     return text;
 }
@@ -298,6 +295,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
 
