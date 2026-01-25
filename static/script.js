@@ -141,7 +141,7 @@ function addMessage(sender, text) {
     div.scrollTop = div.scrollHeight;
 }
 
-// Ajouter un message progressif (effet machine à écrire)
+// Ajouter un message progressif (machine à écrire)
 async function addMessageProgressive(sender, text) {
     const messagesDiv = document.getElementById("messages");
     text = cleanMessage(text);
@@ -177,7 +177,7 @@ function cleanMessage(text) {
     return text.replace(/\r\n|\r/g, "\n");
 }
 
-// Formater le texte (Markdown → HTML)
+// Formater le texte Markdown → HTML
 function formatMessage(text) {
     const codeBlocks = [];
     text = text.replace(/```([\s\S]+?)```/g, (m, code) => {
@@ -202,7 +202,7 @@ function formatMessage(text) {
         const lang = getCodeLang(code);
         return `
 <div class="code-block">
-<span class="code-lang" style="user-select:none; display:block; opacity:0.7; font-size:12px;">${lang}</span>
+<span class="code-lang">${lang}</span>
 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
 <pre><code>${code}</code></pre>
 </div>`;
@@ -211,7 +211,7 @@ function formatMessage(text) {
     return text;
 }
 
-// Détecte la langue du code (première ligne)
+// Détecter la langue du code
 function getCodeLang(code) {
     const firstLine = code.split("\n")[0].trim().toLowerCase();
     if (["python","html","js","javascript","bash"].includes(firstLine)) return firstLine;
