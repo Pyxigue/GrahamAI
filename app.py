@@ -133,6 +133,11 @@ def chat():
     session["chats"] = chats
     session.modified = True
 
-    return jsonify({"reply": reply})
+    return jsonify({
+        "reply": reply,
+        "chat_name": chat["name"]
+    })
+
+
 
 
