@@ -150,17 +150,6 @@ async function addMessageProgressive(sender, text) {
     const beforeCode = codeMatch ? text.slice(0, codeMatch.index) : text;
     const codeBlock = codeMatch ? codeMatch[0] : null;
 
-    // Renommer le chat si le backend le fournit
-    if (data.chat_name && chat.name !== data.chat_name) {
-        chat.name = data.chat_name;
-        renderChatList();
-        // Mettre le vrai nom avec animation après la réponse du bot
-        updateChatTitleProgressive(chat.name);
-    } else if (!chat.name) {
-        chat.name = "Nouveau chat";
-        updateChatTitleProgressive(chat.name);
-    }
-
     if (beforeCode.trim()) {
         const msg = document.createElement("div");
         msg.className = "message " + sender;
@@ -186,6 +175,7 @@ async function addMessageProgressive(sender, text) {
         addMessage(sender, afterCode);
     }
 }
+
 
 // Nettoyer le texte
 function cleanMessage(text) {
@@ -294,4 +284,5 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
