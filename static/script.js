@@ -142,8 +142,8 @@ function addMessage(sender, text) {
     const div = document.getElementById("messages");
     const msg = document.createElement("div");
     msg.className = "message " + sender;
-    const prefix = sender === "user" ? "You" : "GrahamAI";
-    msg.innerHTML = `<span class="sender">${prefix}:</span> <span class="content">${formatMessage(text)}</span>`;
+    const prefix = sender === "user" ? "" : "";
+    msg.innerHTML = `<span class="sender">${prefix}</span> <span class="content">${formatMessage(text)}</span>`;
     div.appendChild(msg);
     msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
     div.scrollTop = div.scrollHeight;
@@ -292,6 +292,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
 
