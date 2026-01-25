@@ -127,8 +127,11 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
     let beforeCode = codeMatch ? text.slice(0, codeMatch.index) : text;
     let codeBlock = codeMatch ? codeMatch[0] : null;
 
-    const li = chat ? [...document.getElementById("chatList").children]
-        .find(el => el.classList.contains("active")) : null;
+    const li = chat
+        ? [...document.getElementById("chatList").children].find(el =>
+              el.classList.contains("active")
+          )
+        : null;
 
     if (beforeCode.trim()) {
         const msg = document.createElement("div");
@@ -140,14 +143,17 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         const span = msg.querySelector(".progress-text");
 
         for (let i = 0; i <= beforeCode.length; i++) {
-            span.innerHTML = formatMessage(beforeCode.slice(0, i));
+            span.textContent = beforeCode.slice(0, i);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
             if (chat && li) {
                 const newName = beforeCode.slice(0, 20) || "Nouveau chat";
                 li.querySelector("span").textContent = newName;
             }
             await new Promise(r => setTimeout(r, 15));
         }
+
+        span.innerHTML = formatMessage(beforeCode);
 
         if (chat && li) {
             chat.name = beforeCode.trim().slice(0, 20);
@@ -228,4 +234,5 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
