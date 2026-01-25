@@ -139,37 +139,55 @@ function addMessage(sender, text) {
 
 async function addMessageProgressive(sender, text, chat = currentChat) {
     const messagesDiv = document.getElementById("messages");
-    const msg = document.createElement("div");
-    msg.className = "message " + sender;
-
-    const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
-    msg.innerHTML = prefix + "<span class='progress-text'></span>";
-    messagesDiv.appendChild(msg);
-
-    const span = msg.querySelector(".progress-text");
     text = cleanMessage(text);
+
+    const codeMatch = text.match(/```[\s\S]+?```/);
+    let beforeCode = codeMatch ? text.slice(0, codeMatch.index) : text;
+    let codeBlock = codeMatch ? codeMatch[0] : null;
 
     const li = chat ? [...document.getElementById("chatList").children].find(
         el => el.classList.contains("active")
     ) : null;
 
-    for (let i = 0; i <= text.length; i++) {
-        span.innerHTML = formatMessage(text.slice(0, i));
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-        if (chat && li) {
-            const newName = text.slice(0, 20) || "Nouveau chat";
-            li.querySelector("span").textContent = newName;
+    if (beforeCode.trim()) {
+        const msg = document.createElement("div");
+        msg.className = "message " + sender;
+        const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
+        msg.innerHTML = prefix + "<span class='progress-text'></span>";
+        messagesDiv.appendChild(msg);
+
+        const span = msg.querySelector(".progress-text");
+
+        for (let i = 0; i <= beforeCode.length; i++) {
+            span.innerHTML = formatMessage(beforeCode.slice(0, i));
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+
+            if (chat && li) {
+                const newName = beforeCode.slice(0, 20) || "Nouveau chat";
+                li.querySelector("span").textContent = newName;
+            }
+
+            await new Promise(r => setTimeout(r, 15));
         }
 
-        await new Promise(r => setTimeout(r, 15));
+        if (chat && li) {
+            chat.name = beforeCode.trim().slice(0, 20);
+            li.querySelector("span").textContent = chat.name;
+        }
     }
 
-    if (chat && li) {
-        chat.name = text.trim().slice(0, 20);
-        li.querySelector("span").textContent = chat.name;
+    if (codeBlock) {
+        addMessage(sender, codeBlock);
+    }
+
+    const afterCode = codeMatch ? text.slice(codeMatch.index + codeMatch[0].length) : "";
+    if (afterCode.trim()) {
+        addMessage(sender, afterCode);
     }
 }
+
 
 
 
@@ -257,6 +275,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
