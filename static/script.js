@@ -160,23 +160,28 @@ async function sendMessage() {
     addMessage("user", text);
     chat.messages.push({ sender: "user", text });
 
-    const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chat.id, message: text })
-    });
+    try {
+        const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chat.id, message: text })
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (data.chat_name && chat.name !== data.chat_name) {
-        chat.name = data.chat_name;
-        chat.animateName = true;
-        renderChatList();
-        updateChatTitleProgressive(chat.name);
+        if (data.chat_name && chat.name !== data.chat_name) {
+            chat.name = data.chat_name;
+            chat.animateName = true;
+            renderChatList();
+            updateChatTitleProgressive(chat.name);
+        }
+
+        await addMessageProgressive("bot", data.reply);
+        chat.messages.push({ sender: "bot", text: data.reply });
+
+    } catch (err) {
+        alert("Erreur API : " + err.message);
     }
-
-    await addMessageProgressive("bot", data.reply);
-    chat.messages.push({ sender: "bot", text: data.reply });
 
     setSendingState(false);
 }
