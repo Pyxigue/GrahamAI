@@ -236,6 +236,7 @@ input.addEventListener("input", () => {
     input.style.height = input.scrollHeight + "px";
 });
 
+
 input.addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
