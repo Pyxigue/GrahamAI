@@ -2,24 +2,32 @@ let currentChat = null;
 let chats = [];
 let isAITyping = false;
 
-// Charger tous les chats existants
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
+
+    chats.forEach(c => {
+        if (!c.name || c.name.trim() === "") c.name = "Nouveau chat";
+    });
+
     renderChatList();
     if (!currentChat && chats.length > 0) selectChat(chats[0]);
 }
 
-// Créer un nouveau chat
+
 async function newChat() {
     const res = await fetch("/api/chats/new", { method: "POST" });
     const chat = await res.json();
     if (chat.error) return alert(chat.error);
+
+    if (!chat.name || chat.name.trim() === "") chat.name = "Nouveau chat";
+
     chats.push(chat);
     renderChatList();
     selectChat(chat);
     return chat;
 }
+
 
 // Supprimer un chat
 async function deleteChat(chatId) {
@@ -113,12 +121,12 @@ async function sendMessage() {
         });
         const data = await res.json();
 
-        // Renommer le chat si le backend le fournit
         if (data.chat_name && chat.name !== data.chat_name) {
             chat.name = data.chat_name;
             renderChatList();
             updateChatTitleProgressive(chat.name);
         }
+
 
         await addMessageProgressive("bot", data.reply);
         chat.messages.push({ sender: "bot", text: data.reply });
@@ -284,5 +292,6 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
