@@ -113,11 +113,12 @@ async function sendMessage() {
         if (li) li.querySelector("span").textContent = chat.name;
     }
 
-    await addMessageProgressive("bot", data.reply); 
-    chat.messages.push({ sender: "bot", text: data.reply });
+    await addMessageProgressive("bot", data.reply);
 
+    chat.messages.push({ sender: "bot", text: data.reply });
     setSendingState(false);
 }
+
 
 
 
@@ -257,6 +258,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
