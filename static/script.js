@@ -83,16 +83,17 @@ function renderMessages(messages) {
 
 
 async function sendMessage() {
+    if (isAITyping) return;
+
     let chat = currentChat;
-    if (!chat) {
-        chat = await newChat();
-    }
-    if (chat.messages.length >= 30) { alert("Limite de 30 messages atteinte"); return; }
+    if (!chat) chat = await newChat();
 
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
     if (!text) return;
+
     input.value = "";
+    setSendingState(true);
 
     addMessage("user", text);
     chat.messages.push({ sender: "user", text });
@@ -102,16 +103,14 @@ async function sendMessage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: chat.id, message: text })
     });
+
     const data = await res.json();
-    if (data.error) { alert(data.error); return; }
 
     await addMessageProgressive("bot", data.reply);
     chat.messages.push({ sender: "bot", text: data.reply });
 
-    if (data.chat_name && chat.name !== data.chat_name) {
-        chat.name = data.chat_name;
-        renderChatList();
-    }
+    setSendingState(false);
+}
 
 
 
@@ -250,6 +249,7 @@ document.getElementById("newChatBtn").addEventListener("click", newChat);
 
 
 loadChats();
+
 
 
 
