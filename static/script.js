@@ -100,16 +100,19 @@ function renderMessages(messages) {
     messages.forEach(m => addMessage(m.sender, m.text));
 }
 
-// Envoyer un message à l’IA
 async function sendMessage() {
     if (isAITyping) return;
     let chat = currentChat;
     if (!chat) chat = await newChat();
+
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
     if (!text) return;
+
     input.value = "";
     setSendingState(true);
+
+    // Ajouter le message de l'utilisateur
     addMessage("user", text);
     chat.messages.push({ sender: "user", text });
 
@@ -121,15 +124,17 @@ async function sendMessage() {
         });
         const data = await res.json();
 
+        // Mettre à jour le nom du chat si le backend le fournit
         if (data.chat_name && chat.name !== data.chat_name) {
             chat.name = data.chat_name;
             renderChatList();
             updateChatTitleProgressive(chat.name);
         }
 
-
+        // Ajouter la réponse du bot progressivement
         await addMessageProgressive("bot", data.reply);
         chat.messages.push({ sender: "bot", text: data.reply });
+
     } catch (error) {
         alert("Erreur lors de l'envoi du message. Veuillez réessayer.");
     }
@@ -292,6 +297,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
 
