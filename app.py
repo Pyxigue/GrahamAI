@@ -25,15 +25,18 @@ BOT_PROMPT = (
 MAX_CHATS = 60
 MAX_MESSAGES_PER_CHAT = 30
 
+
 @app.route("/")
 def index():
     if "chats" not in session:
         session["chats"] = []
     return render_template("index.html")
 
+
 @app.get("/api/chats")
 def get_chats():
     return jsonify(session.get("chats", []))
+
 
 @app.post("/api/chats/new")
 def new_chat():
@@ -48,6 +51,7 @@ def new_chat():
     session.modified = True
     return jsonify(chat)
 
+
 @app.post("/api/chats/delete")
 def delete_chat():
     data = request.json or {}
@@ -58,11 +62,13 @@ def delete_chat():
     session.modified = True
     return jsonify({"success": True})
 
+
 def clean_title(text):
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
     words = text.split()
     return " ".join(words[:5]).capitalize() if words else "Nouveau chat"
+
 
 @app.post("/api/chat")
 def chat():
@@ -83,6 +89,7 @@ def chat():
 
     chat["messages"].append({"sender": "user", "text": message})
 
+    # TITRE
     if chat["name"] == "Nouveau chat":
         title_prompt = (
             "Donne uniquement un titre court (5 mots max), sans ponctuation, "
@@ -104,7 +111,11 @@ def chat():
         raw_title = title_completion.choices[0].message.content.strip()
         chat["name"] = clean_title(raw_title)
 
-    recent_msgs = [
+    # ✅ On envoie seulement les 30 derniers messages à l'IA
+    recent_msgs = chat["messages"][-MAX_MESSAGES_PER_CHAT:]
+
+    # Préparation du format pour l'IA
+    messages_for_ai = [
         {
             "role": "system",
             "content": BOT_PROMPT
@@ -117,12 +128,12 @@ def chat():
             "role": "user" if m["sender"] == "user" else "assistant",
             "content": m["text"]
         }
-        for m in chat["messages"]
+        for m in recent_msgs
     ]
 
     completion = client.chat.completions.create(
         model="llama-3.1-8b-instant",
-        messages=recent_msgs
+        messages=messages_for_ai
     )
 
     reply = completion.choices[0].message.content.strip()
@@ -137,8 +148,6 @@ def chat():
         "reply": reply,
         "chat_name": chat["name"]
     })
-
-
 
 
 
