@@ -213,23 +213,28 @@ function setSendingState(state) {
     btn.classList.toggle("disabled", state);
 }
 
-/* ===================== INPUT ===================== */
 
 const input = document.getElementById("messageInput");
-
-input.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        if (!isAITyping) sendMessage();
-    }
-});
+const sendBtn = document.getElementById("sendBtn");
 
 input.addEventListener("input", () => {
-    input.style.height = "auto";
-    input.style.height = input.scrollHeight + "px";
+  input.style.height = "auto";
+  input.style.height = input.scrollHeight + "px";
+});
+
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    if (!isAITyping) sendMessage();
+  }
+});
+
+sendBtn.addEventListener("click", () => {
+  if (!isAITyping) sendMessage();
 });
 
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
