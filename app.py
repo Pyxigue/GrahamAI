@@ -77,11 +77,13 @@ def chat():
     chat["messages"].append({"sender": "user", "text": message})
 
     if chat["name"] == "Nouveau chat":
-        title_prompt = f"Donne un titre de 5 mots grand max pour ce chat:\n{message}"
+        title_prompt = f"Donne un titre de moins de 5 mots pour ce chat:\n{message}"
         title_completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
-            messages=[{"role": "system", "content": BOT_PROMPT},
-                      {"role": "user", "content": title_prompt}]
+            messages=[
+                {"role": "system", "content": BOT_PROMPT},
+                {"role": "user", "content": title_prompt}
+            ]
         )
         chat["name"] = title_completion.choices[0].message.content.strip()
 
@@ -102,5 +104,6 @@ def chat():
     session["chats"] = chats
     session.modified = True
     return jsonify({"reply": reply})
+
 
 
