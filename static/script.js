@@ -150,6 +150,17 @@ async function addMessageProgressive(sender, text) {
     const beforeCode = codeMatch ? text.slice(0, codeMatch.index) : text;
     const codeBlock = codeMatch ? codeMatch[0] : null;
 
+    // Renommer le chat si le backend le fournit
+    if (data.chat_name && chat.name !== data.chat_name) {
+        chat.name = data.chat_name;
+        renderChatList();
+        // Mettre le vrai nom avec animation après la réponse du bot
+        updateChatTitleProgressive(chat.name);
+    } else if (!chat.name) {
+        chat.name = "Nouveau chat";
+        updateChatTitleProgressive(chat.name);
+    }
+
     if (beforeCode.trim()) {
         const msg = document.createElement("div");
         msg.className = "message " + sender;
@@ -166,10 +177,14 @@ async function addMessageProgressive(sender, text) {
         span.innerHTML = formatMessage(beforeCode);
     }
 
-    if (codeBlock) addMessage(sender, codeBlock);
+    if (codeBlock) {
+        addMessage(sender, codeBlock);
+    }
 
     const afterCode = codeMatch ? text.slice(codeMatch.index + codeBlock.length) : "";
-    if (afterCode.trim()) addMessage(sender, afterCode);
+    if (afterCode.trim()) {
+        addMessage(sender, afterCode);
+    }
 }
 
 // Nettoyer le texte
@@ -184,6 +199,7 @@ function formatMessage(text) {
         codeBlocks.push(code);
         return `___CODEBLOCK_${codeBlocks.length - 1}___`;
     });
+
     text = text.replace(/`([^`\n]+)`/g, "<code>$1</code>");
     text = text.replace(/\*\*([^\*\n]+)\*\*/g, "<b>$1</b>");
     text = text.replace(/\*([^\*\n]+)\*/g, "<i>$1</i>");
@@ -191,20 +207,31 @@ function formatMessage(text) {
     text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
     text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
     text = text.replace(/^\* (.+)$/gm, "<li>$1</li>");
-    if (text.includes("<li>")) text = `<ul>${text}</ul>`;
+    if (text.includes("<li>")) {
+        text = `<ul>${text}</ul>`;
+    }
     text = text.replace(/\n/g, "<br>");
 
     text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
-        const code = codeBlocks[index]
+        let code = codeBlocks[index]
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
+
         const lang = getCodeLang(code);
+
+        // Supprimer la première ligne si c’est le langage
+        const lines = code.split("\n");
+        if (lines[0].toLowerCase() === lang) {
+            lines.shift();
+        }
+        code = lines.join("\n");
+
         return `
 <div class="code-block">
-<span class="code-lang">${lang}</span>
-<button class="copy-btn" onclick="copyCode(this)">Copy</button>
-<pre><code>${code}</code></pre>
+    <span class="code-lang">${lang}</span>
+    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    <pre><code>${code}</code></pre>
 </div>`;
     });
 
@@ -267,3 +294,4 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
