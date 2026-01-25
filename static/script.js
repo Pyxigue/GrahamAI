@@ -29,7 +29,7 @@ async function newChat() {
 }
 
 
-// Supprimer un chat
+
 async function deleteChat(chatId) {
     if (!confirm("Supprimer ce chat ?")) return;
     await fetch("/api/chats/delete", {
@@ -44,7 +44,7 @@ async function deleteChat(chatId) {
     else clearMessages();
 }
 
-// Sélectionner un chat
+
 function selectChat(chat) {
     currentChat = chat;
     renderChatList();
@@ -52,7 +52,7 @@ function selectChat(chat) {
     updateChatTitleProgressive(chat.name || "Nouveau chat");
 }
 
-// Écrire le titre du chat progressivement
+
 function updateChatTitleProgressive(title) {
     const titleEl = document.getElementById("chatTitle");
     titleEl.textContent = "";
@@ -64,12 +64,11 @@ function updateChatTitleProgressive(title) {
     }, 50);
 }
 
-// Vider la zone de messages
+
 function clearMessages() {
     document.getElementById("messages").innerHTML = "";
 }
 
-// Afficher la liste des chats
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
@@ -92,7 +91,7 @@ function renderChatList() {
     });
 }
 
-// Afficher tous les messages d’un chat
+
 function renderMessages(messages) {
     const div = document.getElementById("messages");
     div.innerHTML = "";
@@ -112,7 +111,6 @@ async function sendMessage() {
     input.value = "";
     setSendingState(true);
 
-    // Ajouter le message de l'utilisateur
     addMessage("user", text);
     chat.messages.push({ sender: "user", text });
 
@@ -131,7 +129,6 @@ async function sendMessage() {
             updateChatTitleProgressive(chat.name);
         }
 
-        // Ajouter la réponse du bot progressivement
         await addMessageProgressive("bot", data.reply);
         chat.messages.push({ sender: "bot", text: data.reply });
 
@@ -142,7 +139,6 @@ async function sendMessage() {
     setSendingState(false);
 }
 
-// Ajouter un message statique
 function addMessage(sender, text) {
     const div = document.getElementById("messages");
     const msg = document.createElement("div");
@@ -154,7 +150,6 @@ function addMessage(sender, text) {
     div.scrollTop = div.scrollHeight;
 }
 
-// Ajouter un message progressif (machine à écrire)
 async function addMessageProgressive(sender, text) {
     const messagesDiv = document.getElementById("messages");
     text = cleanMessage(text);
@@ -190,32 +185,32 @@ async function addMessageProgressive(sender, text) {
 }
 
 
-// Nettoyer le texte
 function cleanMessage(text) {
     return text.replace(/\r\n|\r/g, "\n");
 }
 
-// Formater le texte Markdown → HTML
 function formatMessage(text) {
     const codeBlocks = [];
+
     text = text.replace(/```([\s\S]+?)```/g, (m, code) => {
         codeBlocks.push(code);
         return `___CODEBLOCK_${codeBlocks.length - 1}___`;
     });
+    text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
 
-    text = text.replace(/`([^`\n]+)`/g, "<code>$1</code>");
     text = text.replace(/\*\*([^\*\n]+)\*\*/g, "<b>$1</b>");
     text = text.replace(/\*([^\*\n]+)\*/g, "<i>$1</i>");
+
     text = text.replace(/^### (.+)$/gm, "<h3>$1</h3>");
     text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
     text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+
     text = text.replace(/^\* (.+)$/gm, "<li>$1</li>");
-    if (text.includes("<li>")) {
-        text = `<ul>${text}</ul>`;
-    }
+    if (text.includes("<li>")) text = `<ul>${text}</ul>`;
+
     text = text.replace(/\n/g, "<br>");
 
-    text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
+        text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
         let code = codeBlocks[index]
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
@@ -223,32 +218,27 @@ function formatMessage(text) {
 
         const lang = getCodeLang(code);
 
-        // Supprimer la première ligne si c’est le langage
         const lines = code.split("\n");
-        if (lines[0].toLowerCase() === lang) {
-            lines.shift();
-        }
+        if (lines[0].toLowerCase() === lang) lines.shift();
         code = lines.join("\n");
 
-        return `
-<div class="code-block">
-    <span class="code-lang">${lang}</span>
-    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-    <pre><code>${code}</code></pre>
-</div>`;
+        return `<div class="code-block">
+            <span class="code-lang">${lang}</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><code class="language-${lang}">${code}</code></pre>
+        </div>`;
     });
 
     return text;
 }
 
-// Détecter la langue du code
+
 function getCodeLang(code) {
     const firstLine = code.split("\n")[0].trim().toLowerCase();
     if (["python","html","js","javascript","bash"].includes(firstLine)) return firstLine;
     return "code";
 }
 
-// Copier le code
 function copyCode(btn) {
     const codeElement = btn.parentElement.querySelector("code");
     if (!codeElement) return;
@@ -267,7 +257,6 @@ function copyCode(btn) {
     });
 }
 
-// État d’envoi
 function setSendingState(state) {
     isAITyping = state;
     const btn = document.getElementById("sendBtn");
@@ -275,7 +264,6 @@ function setSendingState(state) {
     btn.classList.toggle("disabled", state);
 }
 
-// Gestion de l’input et du bouton
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 
@@ -297,6 +285,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
 
