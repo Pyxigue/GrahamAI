@@ -196,15 +196,16 @@ textarea:focus {
 }
 
 .code-block .code-lang {
-  position: absolute;
-  bottom: 4px;
-  right: 8px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
-  user-select: none;
-  pointer-events: none;
-  font-style: italic;
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.25);
+    user-select: none; 
+    pointer-events: none; 
+    font-style: italic;
 }
+
 
 .copy-btn {
   position: absolute;
