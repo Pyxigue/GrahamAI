@@ -105,7 +105,15 @@ async function sendMessage() {
 
     const data = await res.json();
 
-    await addMessageProgressive("bot", data.reply, chat); 
+    if (data.chat_name && chat.name !== data.chat_name) {
+        chat.name = data.chat_name;
+        const li = [...document.getElementById("chatList").children].find(
+            el => el.classList.contains("active")
+        );
+        if (li) li.querySelector("span").textContent = chat.name;
+    }
+
+    await addMessageProgressive("bot", data.reply); 
     chat.messages.push({ sender: "bot", text: data.reply });
 
     setSendingState(false);
@@ -249,6 +257,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
