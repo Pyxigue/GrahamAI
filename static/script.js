@@ -137,41 +137,24 @@ function addMessage(sender, text) {
     div.scrollTop = div.scrollHeight;
 }
 
-async function addMessageProgressive(sender, text, chat = null) {
+async function addMessageProgressive(sender, text) {
     const messagesDiv = document.getElementById("messages");
     const msg = document.createElement("div");
     msg.className = "message " + sender;
-    const prefix = "<b>GrahamAI :</b> ";
-    msg.innerHTML = prefix + "<span class='progress-text'></span>";
+    msg.innerHTML = "<b>GrahamAI :</b> <span class='progress-text'></span>";
     messagesDiv.appendChild(msg);
 
     const span = msg.querySelector(".progress-text");
 
     text = cleanMessage(text);
-    let i = 0;
-
-    const li = chat ? [...document.getElementById("chatList").children].find(
-        el => el.classList.contains("active")
-    ) : null;
-
-    while (i <= text.length) {
+    for (let i = 0; i <= text.length; i++) {
         span.innerHTML = formatMessage(text.slice(0, i));
         msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-        if (chat && li) {
-            li.querySelector("span").textContent = text.slice(0, i) || "Nouveau chat";
-        }
-
-        i++;
         await new Promise(r => setTimeout(r, 15));
     }
-
-    if (chat && li && text.trim().length > 0) {
-        chat.name = text.trim().slice(0, 20);
-        li.querySelector("span").textContent = chat.name;
-    }
 }
+
 
 
 
@@ -258,6 +241,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
