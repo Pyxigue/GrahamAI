@@ -2,6 +2,17 @@ let currentChat = null;
 let chats = [];
 let isAITyping = false;
 
+// -------------------- Utils --------------------
+function typeTextProgressive(el, text, speed = 40) {
+    el.textContent = "";
+    let i = 0;
+    const interval = setInterval(() => {
+        el.textContent += text[i];
+        i++;
+        if (i >= text.length) clearInterval(interval);
+    }, speed);
+}
+
 // -------------------- Chats --------------------
 async function loadChats() {
     const res = await fetch("/api/chats");
@@ -20,9 +31,9 @@ async function newChat() {
     const chat = await res.json();
     if (chat.error) return alert(chat.error);
 
-    if (!chat.name || chat.name.trim() === "") chat.name = "Nouveau chat";
-
+    chat.name ||= "Nouveau chat";
     chats.push(chat);
+
     renderChatList();
     selectChat(chat);
     return chat;
@@ -30,64 +41,63 @@ async function newChat() {
 
 async function deleteChat(chatId) {
     if (!confirm("Supprimer ce chat ?")) return;
+
     await fetch("/api/chats/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: chatId })
     });
+
     chats = chats.filter(c => c.id !== chatId);
     if (currentChat?.id === chatId) currentChat = null;
+
     renderChatList();
-    if (chats.length > 0) selectChat(chats[0]);
-    else clearMessages();
+    chats.length ? selectChat(chats[0]) : clearMessages();
 }
 
 function selectChat(chat) {
     currentChat = chat;
     renderChatList();
     renderMessages(chat.messages);
-    
-    const title = chat.name?.trim() || "Nouveau chat";
-    updateChatTitleProgressive(title);
+    updateChatTitleProgressive(chat.name || "Nouveau chat");
 }
 
 // -------------------- Titre progressif --------------------
 let currentTitleInterval = null;
 function updateChatTitleProgressive(title) {
-    const titleEl = document.getElementById("chatTitle");
-    if (!titleEl) return;
+    const el = document.getElementById("chatTitle");
+    if (!el) return;
 
     if (currentTitleInterval) clearInterval(currentTitleInterval);
+    el.textContent = "";
 
-    titleEl.textContent = "";
     let i = 0;
     currentTitleInterval = setInterval(() => {
-        if (titleEl.textContent !== "" && titleEl.textContent !== title.slice(0, i)) {
-            clearInterval(currentTitleInterval);
-            titleEl.textContent = title;
-            return;
-        }
-
-        titleEl.textContent += title[i];
+        el.textContent += title[i];
         i++;
         if (i >= title.length) clearInterval(currentTitleInterval);
     }, 50);
 }
 
-// -------------------- Messages --------------------
-function clearMessages() {
-    document.getElementById("messages").innerHTML = "";
-}
-
+// -------------------- Sidebar --------------------
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
+
     chats.forEach(chat => {
         const li = document.createElement("li");
         li.className = currentChat?.id === chat.id ? "active" : "";
+
         const span = document.createElement("span");
-        span.textContent = chat.name;
         li.appendChild(span);
+
+        if (chat.animateName) {
+            typeTextProgressive(span, chat.name);
+            chat.animateName = false;
+        } else {
+            span.textContent = chat.name;
+        }
+
         li.onclick = () => selectChat(chat);
 
         const del = document.createElement("button");
@@ -97,53 +107,54 @@ function renderChatList() {
             e.stopPropagation();
             deleteChat(chat.id);
         };
+
         li.appendChild(del);
         list.appendChild(li);
     });
 }
 
+// -------------------- Messages --------------------
+function clearMessages() {
+    document.getElementById("messages").innerHTML = "";
+}
+
 function renderMessages(messages) {
     const div = document.getElementById("messages");
     div.innerHTML = "";
-    if (!messages || messages.length === 0) return;
-    messages.forEach(m => addMessage(m.sender, m.text));
+    messages?.forEach(m => addMessage(m.sender, m.text));
 }
 
 async function sendMessage() {
     if (isAITyping) return;
-    let chat = currentChat;
-    if (!chat) chat = await newChat();
+    let chat = currentChat || await newChat();
 
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
     if (!text) return;
+
     input.value = "";
     setSendingState(true);
 
     addMessage("user", text);
     chat.messages.push({ sender: "user", text });
 
-    try {
-        const res = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chat.id, message: text })
-        });
-        const data = await res.json();
+    const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chat.id, message: text })
+    });
 
-        if (data.chat_name && chat.name !== data.chat_name) {
-            chat.name = data.chat_name;
-            renderChatList(); 
-            updateChatTitleProgressive(chat.name);
-        }
+    const data = await res.json();
 
-        // Affichage progressif du message de l'IA
-        await addMessageProgressive("bot", data.reply);
-        chat.messages.push({ sender: "bot", text: data.reply });
-
-    } catch (error) {
-        alert("Erreur lors de l'envoi du message. Veuillez réessayer.");
+    if (data.chat_name && chat.name !== data.chat_name) {
+        chat.name = data.chat_name;
+        chat.animateName = true;
+        renderChatList();
+        updateChatTitleProgressive(chat.name);
     }
+
+    await addMessageProgressive("bot", data.reply);
+    chat.messages.push({ sender: "bot", text: data.reply });
 
     setSendingState(false);
 }
@@ -277,3 +288,4 @@ document.getElementById("newChatBtn").onclick = newChat;
 
 // Chargement initial
 loadChats();
+
