@@ -2,6 +2,7 @@ let currentChat = null;
 let chats = [];
 let isAITyping = false;
 
+// -------------------- Chats --------------------
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -13,7 +14,6 @@ async function loadChats() {
     renderChatList();
     if (!currentChat && chats.length > 0) selectChat(chats[0]);
 }
-
 
 async function newChat() {
     const res = await fetch("/api/chats/new", { method: "POST" });
@@ -27,8 +27,6 @@ async function newChat() {
     selectChat(chat);
     return chat;
 }
-
-
 
 async function deleteChat(chatId) {
     if (!confirm("Supprimer ce chat ?")) return;
@@ -44,7 +42,6 @@ async function deleteChat(chatId) {
     else clearMessages();
 }
 
-
 function selectChat(chat) {
     currentChat = chat;
     renderChatList();
@@ -54,10 +51,8 @@ function selectChat(chat) {
     updateChatTitleProgressive(title);
 }
 
-
-
+// -------------------- Titre progressif --------------------
 let currentTitleInterval = null;
-
 function updateChatTitleProgressive(title) {
     const titleEl = document.getElementById("chatTitle");
     if (!titleEl) return;
@@ -79,8 +74,7 @@ function updateChatTitleProgressive(title) {
     }, 50);
 }
 
-
-
+// -------------------- Messages --------------------
 function clearMessages() {
     document.getElementById("messages").innerHTML = "";
 }
@@ -95,6 +89,7 @@ function renderChatList() {
         span.textContent = chat.name;
         li.appendChild(span);
         li.onclick = () => selectChat(chat);
+
         const del = document.createElement("button");
         del.textContent = "🗑";
         del.className = "delete-btn";
@@ -106,7 +101,6 @@ function renderChatList() {
         list.appendChild(li);
     });
 }
-
 
 function renderMessages(messages) {
     const div = document.getElementById("messages");
@@ -154,7 +148,6 @@ async function sendMessage() {
     setSendingState(false);
 }
 
-
 function addMessage(sender, text) {
     const div = document.getElementById("messages");
     const msg = document.createElement("div");
@@ -196,8 +189,7 @@ async function addMessageProgressive(sender, text) {
     if (afterCode.trim()) addMessage(sender, afterCode);
 }
 
-
-
+// -------------------- Formatage --------------------
 function cleanMessage(text) {
     return text.replace(/\r\n|\r/g, "\n");
 }
@@ -209,58 +201,42 @@ function formatMessage(text) {
         codeBlocks.push({ lang: lang || "code", code });
         return `___CODEBLOCK_${codeBlocks.length - 1}___`;
     });
-    text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
 
+    text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
     text = text.replace(/\*\*([^\*\n]+)\*\*/g, "<b>$1</b>");
     text = text.replace(/\*([^\*\n]+)\*/g, "<i>$1</i>");
-
     text = text.replace(/^### (.+)$/gm, "<h3>$1</h3>");
     text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
     text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
-
     text = text.replace(/^\* (.+)$/gm, "<li>$1</li>");
     if (text.includes("<li>")) text = `<ul>${text}</ul>`;
-
     text = text.replace(/\n/g, "<br>");
 
-        text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
-        let code = codeBlocks[index]
+    // Remplacement des placeholders par les blocs de code réels
+    text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
+        const { lang, code } = codeBlocks[index];
+
+        const escapedCode = code
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
 
-        const lang = getCodeLang(code);
-
-        const lines = code.split("\n");
-        if (lines[0].toLowerCase() === lang) lines.shift();
-        code = lines.join("\n");
-
         return `<div class="code-block">
             <span class="code-lang">${lang}</span>
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-            <pre><code class="language-${lang}">${code}</code></pre>
+            <pre><code class="language-${lang}">${escapedCode}</code></pre>
         </div>`;
     });
 
     return text;
 }
 
-
-function getCodeLang(code) {
-    const firstLine = code.split("\n")[0].trim().toLowerCase();
-    if (["python","html","js","javascript","bash"].includes(firstLine)) return firstLine;
-    return "code";
-}
-
+// -------------------- Copy code --------------------
 function copyCode(btn) {
     const codeElement = btn.parentElement.querySelector("code");
     if (!codeElement) return;
 
     let codeText = codeElement.innerText.trim();
-    const lines = codeText.split("\n");
-    if (lines[0].match(/^(python|html|js|javascript|bash)$/i)) lines.shift();
-    codeText = lines.join("\n");
-
     navigator.clipboard.writeText(codeText).then(() => {
         btn.textContent = "Copied!";
         setTimeout(() => btn.textContent = "Copy", 1500);
@@ -270,6 +246,7 @@ function copyCode(btn) {
     });
 }
 
+// -------------------- UI --------------------
 function setSendingState(state) {
     isAITyping = state;
     const btn = document.getElementById("sendBtn");
@@ -297,4 +274,6 @@ sendBtn.addEventListener("click", () => {
 });
 
 document.getElementById("newChatBtn").onclick = newChat;
+
+// Chargement initial
 loadChats();
