@@ -2,6 +2,7 @@ let currentChat = null;
 let chats = [];
 let isAITyping = false;
 
+/* ===================== CHATS ===================== */
 
 async function loadChats() {
     const res = await fetch("/api/chats");
@@ -10,17 +11,15 @@ async function loadChats() {
     if (!currentChat && chats.length > 0) selectChat(chats[0]);
 }
 
-
 async function newChat() {
     const res = await fetch("/api/chats/new", { method: "POST" });
     const chat = await res.json();
-    if (chat.error) { alert(chat.error); return; }
+    if (chat.error) return alert(chat.error);
     chats.push(chat);
     renderChatList();
     selectChat(chat);
     return chat;
 }
-
 
 async function deleteChat(chatId) {
     if (!confirm("Supprimer ce chat ?")) return;
@@ -30,58 +29,59 @@ async function deleteChat(chatId) {
         body: JSON.stringify({ chat_id: chatId })
     });
     chats = chats.filter(c => c.id !== chatId);
-    if (currentChat && currentChat.id === chatId) currentChat = null;
+    if (currentChat?.id === chatId) currentChat = null;
     renderChatList();
-    if (currentChat) selectChat(currentChat);
-    else showNoChatMessage();
+    if (chats.length > 0) selectChat(chats[0]);
+    else clearMessages();
 }
 
 function selectChat(chat) {
     currentChat = chat;
     renderChatList();
-    if (chat.messages.length === 0) showNoChatMessage();
-    else renderMessages(chat.messages);
+    renderMessages(chat.messages);
 }
 
-
-function showNoChatMessage() {
-    const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = "";
+function clearMessages() {
+    document.getElementById("messages").innerHTML = "";
 }
 
-
+/* ===================== UI ===================== */
 
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
+
     chats.forEach(chat => {
         const li = document.createElement("li");
-        li.className = currentChat && chat.id === currentChat.id ? "active" : "";
+        li.className = currentChat?.id === chat.id ? "active" : "";
 
-        const titleSpan = document.createElement("span");
-        titleSpan.textContent = chat.name;
-        li.appendChild(titleSpan);
+        const span = document.createElement("span");
+        span.textContent = chat.name;
+        li.appendChild(span);
+
         li.onclick = () => selectChat(chat);
 
-        const delBtn = document.createElement("button");
-        delBtn.innerHTML = "🗑";
-        delBtn.className = "delete-btn";
-        delBtn.onclick = (e) => { e.stopPropagation(); deleteChat(chat.id); };
-        li.appendChild(delBtn);
+        const del = document.createElement("button");
+        del.textContent = "🗑";
+        del.className = "delete-btn";
+        del.onclick = e => {
+            e.stopPropagation();
+            deleteChat(chat.id);
+        };
 
+        li.appendChild(del);
         list.appendChild(li);
     });
 }
 
 function renderMessages(messages) {
-    const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = "";
+    const div = document.getElementById("messages");
+    div.innerHTML = "";
     if (!messages || messages.length === 0) return;
     messages.forEach(m => addMessage(m.sender, m.text));
 }
 
-
-
+/* ===================== SEND MESSAGE ===================== */
 
 async function sendMessage() {
     if (isAITyping) return;
@@ -118,146 +118,109 @@ async function sendMessage() {
     setSendingState(false);
 }
 
-
-    if (chat.name === "Nouveau chat") progressiveRenameChat(chat);
-}
-
+/* ===================== MESSAGES ===================== */
 
 function addMessage(sender, text) {
-    const messagesDiv = document.getElementById("messages");
+    const div = document.getElementById("messages");
     const msg = document.createElement("div");
     msg.className = "message " + sender;
 
     text = cleanMessage(text);
-
-    const formatted = formatMessage(text);
     const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
-    msg.innerHTML = prefix + formatted;
+    msg.innerHTML = prefix + formatMessage(text);
 
-    messagesDiv.appendChild(msg);
-    msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    div.appendChild(msg);
+    msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+    div.scrollTop = div.scrollHeight;
 }
 
-
 async function addMessageProgressive(sender, text) {
-    const messagesDiv = document.getElementById("messages");
+    const div = document.getElementById("messages");
     const msg = document.createElement("div");
-    msg.className = "message " + sender;
-    const prefix = "<b>GrahamAI :</b> ";
-    msg.innerHTML = prefix + "<span class='progress-text'></span>";
-    messagesDiv.appendChild(msg);
+    msg.className = "message bot";
+    msg.innerHTML = "<b>GrahamAI :</b> <span class='progress-text'></span>";
+    div.appendChild(msg);
 
     const span = msg.querySelector(".progress-text");
-
     text = cleanMessage(text);
 
-    let i = 0;
-    while (i <= text.length) {
+    for (let i = 0; i <= text.length; i++) {
         span.innerHTML = formatMessage(text.slice(0, i));
-        msg.querySelectorAll("pre code").forEach(block => hljs.highlightElement(block));
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        i++;
+        msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+        div.scrollTop = div.scrollHeight;
         await new Promise(r => setTimeout(r, 15));
     }
 }
 
+/* ===================== HELPERS ===================== */
 
 function cleanMessage(text) {
-    text = text.replace(/^python\s*#?/i, "");
-    text = text.replace(/^[#*]\s*/gm, ""); 
-    text = text.replace(/\r\n|\r/g, "\n");
-    return text;
+    return text
+        .replace(/^python\s*#?/i, "")
+        .replace(/^[#*]\s*/gm, "")
+        .replace(/\r\n|\r/g, "\n");
 }
 
 function formatMessage(text) {
     const parts = text.split(/(```[\s\S]+?```)/g);
-    let formatted = "";
+    let out = "";
 
-    parts.forEach(part => {
-        if (part.startsWith("```") && part.endsWith("```")) {
-            let code = part.slice(3, -3);
-
-            code = code.replace(/^\s*[a-zA-Z0-9#+.-]+\s*\n/, "");
-
-            const escaped = code
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-
-            formatted += `
+    parts.forEach(p => {
+        if (p.startsWith("```")) {
+            let code = p.slice(3, -3).replace(/^\s*[a-zA-Z0-9#+.-]+\s*\n/, "");
+            code = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            out += `
                 <div class="code-block">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code>${escaped}</code></pre>
-                </div>
-            `;
+                    <pre><code>${code}</code></pre>
+                </div>`;
         } else {
-            formatted += part.replace(/\n/g, "<br>");
+            out += p.replace(/\n/g, "<br>");
         }
     });
 
-    return formatted;
+    return out;
 }
-
 
 function copyCode(btn) {
     const code = btn.parentElement.querySelector("code").innerText;
-    navigator.clipboard.writeText(code).then(() => {
-        btn.textContent = "Copied!";
-        setTimeout(() => btn.textContent = "Copy", 1500);
-    });
+    navigator.clipboard.writeText(code);
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy", 1500);
 }
-
 
 function progressiveRenameChat(chat) {
-    let name = chat.name;
+    const li = document.querySelector("#chatList .active span");
     let i = 0;
-    const li = [...document.getElementById("chatList").children].find(
-        el => el.textContent.startsWith(chat.name) || el.classList.contains("active")
-    );
     const interval = setInterval(() => {
-        if (i > name.length) clearInterval(interval);
-        if (li) li.querySelector("span").textContent = name.slice(0, i);
-        i++;
-    }, 50);
+        li.textContent = chat.name.slice(0, i++);
+        if (i > chat.name.length) clearInterval(interval);
+    }, 40);
 }
 
-function setSendingState(isTyping) {
-    isAITyping = isTyping;
-
+function setSendingState(state) {
+    isAITyping = state;
     const btn = document.getElementById("sendBtn");
-    btn.disabled = isTyping;
-    btn.classList.toggle("disabled", isTyping);
+    btn.disabled = state;
+    btn.classList.toggle("disabled", state);
 }
 
+/* ===================== INPUT ===================== */
 
 const input = document.getElementById("messageInput");
+
 input.addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) {
-        if (isAITyping) {
-            e.preventDefault();
-            return;
-        }
         e.preventDefault();
-        sendMessage();
+        if (!isAITyping) sendMessage();
     }
 });
-
 
 input.addEventListener("input", () => {
     input.style.height = "auto";
     input.style.height = input.scrollHeight + "px";
 });
 
-
-document.getElementById("newChatBtn").addEventListener("click", newChat);
-
+document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
-
-
-
-
-
-
-
