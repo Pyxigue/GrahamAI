@@ -167,18 +167,30 @@ function cleanMessage(text) {
 
 function formatMessage(text) {
     text = text.replace(/```([\s\S]+?)```/g, (m, code) => {
-        code = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        return `<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre><code>${code}</code></pre></div>`;
+        code = code
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        return `
+<div class="code-block">
+<button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<pre><code>${code}</code></pre>
+</div>`;
     });
+
     text = text.replace(/`([^`\n]+)`/g, "<code>$1</code>");
     text = text.replace(/\*\*([^\*\n]+)\*\*/g, "<b>$1</b>");
     text = text.replace(/\*([^\*\n]+)\*/g, "<i>$1</i>");
+
+
     text = text.replace(/^### (.+)$/gm, "<h3>$1</h3>");
     text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
     text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+
+
     text = text.replace(/^\* (.+)$/gm, "<li>$1</li>");
     if (text.includes("<li>")) text = `<ul>${text}</ul>`;
-    return text.replace(/\n/g, "<br>");
+    return text.replace(/\n(?!<\/?(ul|li|pre|code|h\d))/g, "<br>");
 }
 
 function copyCode(btn) {
@@ -216,3 +228,4 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
