@@ -1,6 +1,5 @@
 let currentChat = null;
 let chats = [];
-let typingInterval = null;
 let isAITyping = false;
 
 
@@ -74,12 +73,14 @@ function renderChatList() {
     });
 }
 
-
 function renderMessages(messages) {
     const messagesDiv = document.getElementById("messages");
     messagesDiv.innerHTML = "";
+    if (!messages || messages.length === 0) return;
     messages.forEach(m => addMessage(m.sender, m.text));
 }
+
+
 
 
 async function sendMessage() {
@@ -109,9 +110,13 @@ async function sendMessage() {
     await addMessageProgressive("bot", data.reply);
     chat.messages.push({ sender: "bot", text: data.reply });
 
+    if (data.chat_name && chat.name !== data.chat_name) {
+        chat.name = data.chat_name;
+        progressiveRenameChat(chat);
+    }
+
     setSendingState(false);
 }
-
 
 
     if (chat.name === "Nouveau chat") progressiveRenameChat(chat);
@@ -249,6 +254,7 @@ document.getElementById("newChatBtn").addEventListener("click", newChat);
 
 
 loadChats();
+
 
 
 
