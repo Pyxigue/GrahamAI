@@ -37,6 +37,7 @@ function selectChat(chat) {
     currentChat = chat;
     renderChatList();
     renderMessages(chat.messages);
+    document.getElementById("chatTitle").textContent = chat.name || "Nouveau chat";
 }
 
 function clearMessages() {
@@ -97,6 +98,7 @@ async function sendMessage() {
             const li = [...document.getElementById("chatList").children]
                 .find(el => el.classList.contains("active"));
             if (li) li.querySelector("span").textContent = chat.name;
+            document.getElementById("chatTitle").textContent = chat.name;
         }
 
         await addMessageProgressive("bot", data.reply);
@@ -141,24 +143,21 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         messagesDiv.appendChild(msg);
 
         const span = msg.querySelector(".progress-text");
-
         for (let i = 0; i <= beforeCode.length; i++) {
             span.textContent = beforeCode.slice(0, i);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             if (chat && li) {
-                const newName = beforeCode.slice(0, 20) || "Nouveau chat";
-                li.querySelector("span").textContent = newName;
+                const cleanText = beforeCode.replace(/```[\s\S]+?```/g, "").trim();
+                const title = cleanText.slice(0, 40) || "Nouveau chat";
+                li.querySelector("span").textContent = title;
+                chat.name = title;
+                document.getElementById("chatTitle").textContent = title;
             }
             await new Promise(r => setTimeout(r, 15));
         }
 
         span.innerHTML = formatMessage(beforeCode);
-
-        if (chat && li) {
-            chat.name = beforeCode.trim().slice(0, 20);
-            li.querySelector("span").textContent = chat.name;
-        }
     }
 
     if (codeBlock) addMessage(sender, codeBlock);
@@ -196,12 +195,19 @@ function formatMessage(text) {
 <div class="code-block">
 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
 <pre><code>${code}</code></pre>
+<span class="code-lang">${getCodeLang(code)}</span>
 </div>`;
     });
 
     return text;
 }
 
+// Détecte la langue pour le footer invisible
+function getCodeLang(code) {
+    const firstLine = code.split("\n")[0].trim().toLowerCase();
+    if (["python","html","js","javascript","bash"].includes(firstLine)) return firstLine;
+    return "code";
+}
 
 function copyCode(btn) {
     const codeElement = btn.parentElement.querySelector("code");
@@ -209,9 +215,7 @@ function copyCode(btn) {
 
     let codeText = codeElement.innerText.trim();
     const lines = codeText.split("\n");
-    if (lines[0].match(/^\s*python\s*$/i)) {
-        lines.shift();
-    }
+    if (lines[0].match(/^(python|html|js|javascript|bash)$/i)) lines.shift();
     codeText = lines.join("\n");
 
     navigator.clipboard.writeText(codeText).then(() => {
@@ -222,8 +226,6 @@ function copyCode(btn) {
         alert("Impossible de copier le code.");
     });
 }
-
-
 
 function setSendingState(state) {
     isAITyping = state;
@@ -253,8 +255,3 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
-
-
-
-
-
