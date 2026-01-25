@@ -205,8 +205,8 @@ function cleanMessage(text) {
 function formatMessage(text) {
     const codeBlocks = [];
 
-    text = text.replace(/```([\s\S]+?)```/g, (m, code) => {
-        codeBlocks.push(code);
+    text = text.replace(/```(\w+)?\n([\s\S]+?)```/g, (m, lang, code) => {
+        codeBlocks.push({ lang: lang || "code", code });
         return `___CODEBLOCK_${codeBlocks.length - 1}___`;
     });
     text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
@@ -298,6 +298,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
 
