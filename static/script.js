@@ -176,7 +176,6 @@ function addMessage(sender, text) {
 }
 
 async function addMessageProgressive(sender, text) {
-    const localToken = ++typingToken;
     const messagesDiv = document.getElementById("messages");
     text = cleanMessage(text);
 
@@ -187,20 +186,23 @@ async function addMessageProgressive(sender, text) {
 
     const span = msg.querySelector(".content");
 
-    for (let i = 0; i <= text.length; i++) {
-        if (localToken !== typingToken) return;
-        span.textContent = text.slice(0, i);
+    const lines = text.split("\n");
+    let buffer = "";
+
+    for (let line of lines) {
+        buffer += line + "\n";
+
+        span.innerHTML = formatMessage(buffer);
+
+        span.querySelectorAll("pre code").forEach(b =>
+            hljs.highlightElement(b)
+        );
+
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        await new Promise(r => setTimeout(r, 12));
+        await new Promise(r => setTimeout(r, 120));
     }
-
-    if (localToken !== typingToken) return;
-
-    span.innerHTML = formatMessage(text);
-    msg.querySelectorAll("pre code").forEach(b =>
-        hljs.highlightElement(b)
-    );
 }
+
 
 
 
@@ -287,6 +289,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
