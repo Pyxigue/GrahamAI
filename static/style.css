@@ -90,11 +90,6 @@ body {
   border-radius: 8px;
   margin-bottom: 15px;
 }
-
-.input-area {
-  display: flex;
-  gap: 10px;
-}
 textarea {
   flex: 1;
   padding: 12px;
@@ -105,11 +100,20 @@ textarea {
   font-size: 14px;
   resize: none;
   transition: all 0.2s;
+  max-height: 150px; 
+  overflow-y: auto; 
 }
+
 textarea:focus {
   outline: none;
   background: #3a3a3a;
   box-shadow: 0 0 5px #4dabf7;
+}
+
+.input-area {
+  display: flex;
+  gap: 10px;
+  align-items: stretch; 
 }
 
 #sendBtn {
@@ -123,7 +127,9 @@ textarea:focus {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  height: auto;
 }
+
 #sendBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -190,5 +196,6 @@ textarea:focus {
 .copy-btn:hover {
   opacity: 1;
 }
+
 
 
