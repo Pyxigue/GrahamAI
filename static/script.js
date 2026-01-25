@@ -49,20 +49,36 @@ function selectChat(chat) {
     currentChat = chat;
     renderChatList();
     renderMessages(chat.messages);
-    updateChatTitleProgressive(chat.name || "Nouveau chat");
+    
+    const title = chat.name?.trim() || "Nouveau chat";
+    updateChatTitleProgressive(title);
 }
 
+
+
+let currentTitleInterval = null;
 
 function updateChatTitleProgressive(title) {
     const titleEl = document.getElementById("chatTitle");
+    if (!titleEl) return;
+
+    if (currentTitleInterval) clearInterval(currentTitleInterval);
+
     titleEl.textContent = "";
     let i = 0;
-    const interval = setInterval(() => {
+    currentTitleInterval = setInterval(() => {
+        if (titleEl.textContent !== "" && titleEl.textContent !== title.slice(0, i)) {
+            clearInterval(currentTitleInterval);
+            titleEl.textContent = title;
+            return;
+        }
+
         titleEl.textContent += title[i];
         i++;
-        if (i >= title.length) clearInterval(interval);
+        if (i >= title.length) clearInterval(currentTitleInterval);
     }, 50);
 }
+
 
 
 function clearMessages() {
@@ -107,7 +123,6 @@ async function sendMessage() {
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
     if (!text) return;
-
     input.value = "";
     setSendingState(true);
 
@@ -122,13 +137,13 @@ async function sendMessage() {
         });
         const data = await res.json();
 
-        // Mettre à jour le nom du chat si le backend le fournit
         if (data.chat_name && chat.name !== data.chat_name) {
             chat.name = data.chat_name;
-            renderChatList();
+            renderChatList(); 
             updateChatTitleProgressive(chat.name);
         }
 
+        // Affichage progressif du message de l'IA
         await addMessageProgressive("bot", data.reply);
         chat.messages.push({ sender: "bot", text: data.reply });
 
@@ -138,6 +153,7 @@ async function sendMessage() {
 
     setSendingState(false);
 }
+
 
 function addMessage(sender, text) {
     const div = document.getElementById("messages");
@@ -174,15 +190,12 @@ async function addMessageProgressive(sender, text) {
         span.innerHTML = formatMessage(beforeCode);
     }
 
-    if (codeBlock) {
-        addMessage(sender, codeBlock);
-    }
+    if (codeBlock) addMessage(sender, codeBlock);
 
     const afterCode = codeMatch ? text.slice(codeMatch.index + codeBlock.length) : "";
-    if (afterCode.trim()) {
-        addMessage(sender, afterCode);
-    }
+    if (afterCode.trim()) addMessage(sender, afterCode);
 }
+
 
 
 function cleanMessage(text) {
@@ -285,6 +298,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
 
