@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session
 from groq import Groq
 import os
+import re
 
 app = Flask(__name__)
 app.secret_key = "s01_secret_key"
@@ -57,6 +58,12 @@ def delete_chat():
     session.modified = True
     return jsonify({"success": True})
 
+def clean_title(text):
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", "", text)
+    words = text.split()
+    return " ".join(words[:5]).capitalize() if words else "Nouveau chat"
+
 @app.post("/api/chat")
 def chat():
     data = request.json or {}
@@ -77,19 +84,39 @@ def chat():
     chat["messages"].append({"sender": "user", "text": message})
 
     if chat["name"] == "Nouveau chat":
-        title_prompt = f"Donne un titre avec 5 mots grand max pour ce chat:\n{message}"
+        title_prompt = (
+            "Donne uniquement un titre court (5 mots max), sans ponctuation, "
+            "sans phrase, basé sur ce message :\n"
+            f"{message}"
+        )
+
         title_completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {"role": "system", "content": BOT_PROMPT},
+                {
+                    "role": "system",
+                    "content": BOT_PROMPT + "\nNe donne que le titre. Aucun commentaire."
+                },
                 {"role": "user", "content": title_prompt}
             ]
         )
-        title_raw = title_completion.choices[0].message.content.strip()
-        chat["name"] = title_raw.split("\n")[0].split(".")[0][:30] 
 
-    recent_msgs = [{"role": "system", "content": BOT_PROMPT}] + [
-        {"role": "user" if m["sender"] == "user" else "assistant", "content": m["text"]}
+        raw_title = title_completion.choices[0].message.content.strip()
+        chat["name"] = clean_title(raw_title)
+
+    recent_msgs = [
+        {
+            "role": "system",
+            "content": BOT_PROMPT
+            + "\nNe mentionne jamais la détection de langue."
+            + "\nNe parle pas de ton raisonnement."
+            + "\nRépond directement."
+        }
+    ] + [
+        {
+            "role": "user" if m["sender"] == "user" else "assistant",
+            "content": m["text"]
+        }
         for m in chat["messages"]
     ]
 
@@ -99,14 +126,13 @@ def chat():
     )
 
     reply = completion.choices[0].message.content.strip()
-    reply = reply.lstrip("python").lstrip("#").replace("\r\n", "\n").replace("\r", "\n")
+    reply = reply.replace("\r\n", "\n").replace("\r", "\n")
+    reply = re.sub(r"^je détecte.*\n?", "", reply, flags=re.IGNORECASE)
 
     chat["messages"].append({"sender": "bot", "text": reply})
     session["chats"] = chats
     session.modified = True
+
     return jsonify({"reply": reply})
-
-
-
 
 
