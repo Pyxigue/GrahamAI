@@ -1,6 +1,8 @@
 let currentChat = null;
 let chats = [];
 let isAITyping = false;
+let typingToken = 0;
+
 
 // -------------------- Utils --------------------
 function typeTextProgressive(el, text, speed = 40) {
@@ -56,11 +58,13 @@ async function deleteChat(chatId) {
 }
 
 function selectChat(chat) {
+    typingToken++;
     currentChat = chat;
     renderChatList();
     renderMessages(chat.messages);
     updateChatTitleProgressive(chat.name || "Nouveau chat");
 }
+
 
 // -------------------- Titre progressif --------------------
 let currentTitleInterval = null;
@@ -129,7 +133,14 @@ async function sendMessage() {
     let chat = currentChat || await newChat();
 
     const input = document.getElementById("messageInput");
-    const text = input.value.trim();
+    let text = input.value.trim();
+    if (!text) return;
+
+    // Auto wrap HTML
+    if (/<[^>]+>/.test(text)) {
+        text = "```html\n" + text + "\n```";
+    }
+
     if (!text) return;
 
     input.value = "";
@@ -171,34 +182,32 @@ function addMessage(sender, text) {
 }
 
 async function addMessageProgressive(sender, text) {
+    const localToken = ++typingToken;
     const messagesDiv = document.getElementById("messages");
     text = cleanMessage(text);
 
-    const codeMatch = text.match(/```[\s\S]+?```/);
-    const beforeCode = codeMatch ? text.slice(0, codeMatch.index) : text;
-    const codeBlock = codeMatch ? codeMatch[0] : null;
+    const msg = document.createElement("div");
+    msg.className = "message " + sender;
+    msg.innerHTML = `<span class="content"></span>`;
+    messagesDiv.appendChild(msg);
 
-    if (beforeCode.trim()) {
-        const msg = document.createElement("div");
-        msg.className = "message " + sender;
-        const prefix = sender === "user" ? "You" : "GrahamAI";
-        msg.innerHTML = `<span class="sender">${prefix}:</span> <span class="progress-text"></span>`;
-        messagesDiv.appendChild(msg);
+    const span = msg.querySelector(".content");
 
-        const span = msg.querySelector(".progress-text");
-        for (let i = 0; i <= beforeCode.length; i++) {
-            span.textContent = beforeCode.slice(0, i);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            await new Promise(r => setTimeout(r, 15));
-        }
-        span.innerHTML = formatMessage(beforeCode);
+    for (let i = 0; i <= text.length; i++) {
+        if (localToken !== typingToken) return;
+        span.textContent = text.slice(0, i);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        await new Promise(r => setTimeout(r, 12));
     }
 
-    if (codeBlock) addMessage(sender, codeBlock);
+    if (localToken !== typingToken) return;
 
-    const afterCode = codeMatch ? text.slice(codeMatch.index + codeBlock.length) : "";
-    if (afterCode.trim()) addMessage(sender, afterCode);
+    span.innerHTML = formatMessage(text);
+    msg.querySelectorAll("pre code").forEach(b =>
+        hljs.highlightElement(b)
+    );
 }
+
 
 // -------------------- Formatage --------------------
 function cleanMessage(text) {
@@ -288,4 +297,5 @@ document.getElementById("newChatBtn").onclick = newChat;
 
 // Chargement initial
 loadChats();
+
 
