@@ -207,7 +207,12 @@ function copyCode(btn) {
     const codeElement = btn.parentElement.querySelector("code");
     if (!codeElement) return;
 
-    const codeText = codeElement.innerText.trim();
+    let codeText = codeElement.innerText.trim();
+    const lines = codeText.split("\n");
+    if (lines[0].match(/^\s*python\s*$/i)) {
+        lines.shift();
+    }
+    codeText = lines.join("\n");
 
     navigator.clipboard.writeText(codeText).then(() => {
         btn.textContent = "Copied!";
@@ -217,6 +222,7 @@ function copyCode(btn) {
         alert("Impossible de copier le code.");
     });
 }
+
 
 
 function setSendingState(state) {
@@ -247,6 +253,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
 
