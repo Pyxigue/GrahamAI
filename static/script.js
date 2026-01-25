@@ -3,7 +3,7 @@ let chats = [];
 let isAITyping = false;
 let typingToken = 0;
 
-
+// -------------------- Utils --------------------
 function typeTextProgressive(el, text, speed = 40) {
     el.textContent = "";
     let i = 0;
@@ -14,6 +14,21 @@ function typeTextProgressive(el, text, speed = 40) {
     }, speed);
 }
 
+function escapeHTML(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function createThinkingDot() {
+    const dot = document.createElement("span");
+    dot.className = "thinking-dot";
+    dot.textContent = " ⚪";
+    return dot;
+}
+
+// -------------------- Chats --------------------
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -63,6 +78,7 @@ function selectChat(chat) {
     updateChatTitleProgressive(chat.name || "Nouveau chat");
 }
 
+// -------------------- Titre progressif --------------------
 let currentTitleInterval = null;
 function updateChatTitleProgressive(title) {
     const el = document.getElementById("chatTitle");
@@ -79,6 +95,7 @@ function updateChatTitleProgressive(title) {
     }, 50);
 }
 
+// -------------------- Sidebar --------------------
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
@@ -112,6 +129,7 @@ function renderChatList() {
     });
 }
 
+// -------------------- Messages --------------------
 function clearMessages() {
     document.getElementById("messages").innerHTML = "";
 }
@@ -129,7 +147,6 @@ async function sendMessage() {
     const input = document.getElementById("messageInput");
     let text = input.value.trim();
     if (!text) return;
-
 
     if (/<[^>]+>/.test(text)) {
         text = "```html\n" + text + "\n```";
@@ -181,31 +198,66 @@ async function addMessageProgressive(sender, text) {
 
     const msg = document.createElement("div");
     msg.className = "message " + sender;
-    msg.innerHTML = `<span class="content"></span>`;
+
+    const content = document.createElement("span");
+    content.className = "content";
+
+    const thinkingDot = createThinkingDot();
+
+    msg.appendChild(content);
+    msg.appendChild(thinkingDot);
     messagesDiv.appendChild(msg);
 
-    const span = msg.querySelector(".content");
+    let i = 0;
+    let inCode = false;
+    let codeEl = null;
+    let codeBuffer = "";
+    let textBuffer = "";
 
-    const lines = text.split("\n");
-    let buffer = "";
+    while (i < text.length) {
+        if (text.slice(i, i + 3) === "```") {
+            inCode = !inCode;
+            i += 3;
 
-    for (let line of lines) {
-        buffer += line + "\n";
+            if (inCode) {
+                codeEl = document.createElement("pre");
+                const codeTag = document.createElement("code");
+                codeEl.appendChild(codeTag);
+                content.appendChild(codeEl);
+                codeBuffer = "";
+            } else {
+                codeEl = null;
+            }
+            continue;
+        }
 
-        span.innerHTML = formatMessage(buffer);
+        const char = text[i];
+        i++;
 
-        span.querySelectorAll("pre code").forEach(b =>
-            hljs.highlightElement(b)
-        );
+        if (inCode && codeEl) {
+            codeBuffer += char;
+            codeEl.querySelector("code").textContent = codeBuffer;
+        } else {
+            textBuffer += char;
+            content.textContent = textBuffer;
+        }
 
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        await new Promise(r => setTimeout(r, 120));
+        await new Promise(r => setTimeout(r, 18));
     }
+
+    thinkingDot.remove();
+
+    content.innerHTML = formatMessage(escapeHTML(text));
+
+    content.querySelectorAll("pre code").forEach(b =>
+        hljs.highlightElement(b)
+    );
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-
-
-
+// -------------------- Formatage --------------------
 function cleanMessage(text) {
     return text.replace(/\r\n|\r/g, "\n");
 }
@@ -246,6 +298,7 @@ function formatMessage(text) {
     return text;
 }
 
+// -------------------- Copy code --------------------
 function copyCode(btn) {
     const codeElement = btn.parentElement.querySelector("code");
     if (!codeElement) return;
@@ -260,6 +313,7 @@ function copyCode(btn) {
     });
 }
 
+// -------------------- UI --------------------
 function setSendingState(state) {
     isAITyping = state;
     const btn = document.getElementById("sendBtn");
@@ -289,7 +343,3 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
-
-
-
-
