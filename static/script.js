@@ -44,7 +44,7 @@ function clearMessages() {
     document.getElementById("messages").innerHTML = "";
 }
 
-/* ===================== UI ===================== */
+
 
 function renderChatList() {
     const list = document.getElementById("chatList");
@@ -105,16 +105,12 @@ async function sendMessage() {
 
     const data = await res.json();
 
-    await addMessageProgressive("bot", data.reply);
+    await addMessageProgressive("bot", data.reply, chat); 
     chat.messages.push({ sender: "bot", text: data.reply });
-
-    if (data.chat_name && chat.name !== data.chat_name) {
-        chat.name = data.chat_name;
-        progressiveRenameChat(chat);
-    }
 
     setSendingState(false);
 }
+
 
 
 
@@ -253,6 +249,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
