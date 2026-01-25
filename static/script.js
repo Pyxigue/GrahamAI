@@ -2,6 +2,7 @@ let currentChat = null;
 let chats = [];
 let isAITyping = false;
 
+// Charger tous les chats existants
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -9,6 +10,7 @@ async function loadChats() {
     if (!currentChat && chats.length > 0) selectChat(chats[0]);
 }
 
+// Créer un nouveau chat
 async function newChat() {
     const res = await fetch("/api/chats/new", { method: "POST" });
     const chat = await res.json();
@@ -19,6 +21,7 @@ async function newChat() {
     return chat;
 }
 
+// Supprimer un chat
 async function deleteChat(chatId) {
     if (!confirm("Supprimer ce chat ?")) return;
     await fetch("/api/chats/delete", {
@@ -33,17 +36,32 @@ async function deleteChat(chatId) {
     else clearMessages();
 }
 
+// Sélectionner un chat
 function selectChat(chat) {
     currentChat = chat;
     renderChatList();
     renderMessages(chat.messages);
-    document.getElementById("chatTitle").textContent = chat.name || "Nouveau chat";
+    updateChatTitleProgressive(chat.name || "Nouveau chat");
 }
 
+// Écrire le titre du chat progressivement
+function updateChatTitleProgressive(title) {
+    const titleEl = document.getElementById("chatTitle");
+    titleEl.textContent = "";
+    let i = 0;
+    const interval = setInterval(() => {
+        titleEl.textContent += title[i];
+        i++;
+        if (i >= title.length) clearInterval(interval);
+    }, 50);
+}
+
+// Vider la zone de messages
 function clearMessages() {
     document.getElementById("messages").innerHTML = "";
 }
 
+// Afficher la liste des chats
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
@@ -66,6 +84,7 @@ function renderChatList() {
     });
 }
 
+// Afficher tous les messages d’un chat
 function renderMessages(messages) {
     const div = document.getElementById("messages");
     div.innerHTML = "";
@@ -73,6 +92,7 @@ function renderMessages(messages) {
     messages.forEach(m => addMessage(m.sender, m.text));
 }
 
+// Envoyer un message à l’IA
 async function sendMessage() {
     if (isAITyping) return;
     let chat = currentChat;
@@ -93,12 +113,11 @@ async function sendMessage() {
         });
         const data = await res.json();
 
+        // Renommer le chat si le backend le fournit
         if (data.chat_name && chat.name !== data.chat_name) {
             chat.name = data.chat_name;
-            const li = [...document.getElementById("chatList").children]
-                .find(el => el.classList.contains("active"));
-            if (li) li.querySelector("span").textContent = chat.name;
-            document.getElementById("chatTitle").textContent = chat.name;
+            renderChatList();
+            updateChatTitleProgressive(chat.name);
         }
 
         await addMessageProgressive("bot", data.reply);
@@ -110,6 +129,7 @@ async function sendMessage() {
     setSendingState(false);
 }
 
+// Ajouter un message statique
 function addMessage(sender, text) {
     const div = document.getElementById("messages");
     const msg = document.createElement("div");
@@ -121,19 +141,14 @@ function addMessage(sender, text) {
     div.scrollTop = div.scrollHeight;
 }
 
-async function addMessageProgressive(sender, text, chat = currentChat) {
+// Ajouter un message progressif (effet machine à écrire)
+async function addMessageProgressive(sender, text) {
     const messagesDiv = document.getElementById("messages");
     text = cleanMessage(text);
 
     const codeMatch = text.match(/```[\s\S]+?```/);
-    let beforeCode = codeMatch ? text.slice(0, codeMatch.index) : text;
-    let codeBlock = codeMatch ? codeMatch[0] : null;
-
-    const li = chat
-        ? [...document.getElementById("chatList").children].find(el =>
-              el.classList.contains("active")
-          )
-        : null;
+    const beforeCode = codeMatch ? text.slice(0, codeMatch.index) : text;
+    const codeBlock = codeMatch ? codeMatch[0] : null;
 
     if (beforeCode.trim()) {
         const msg = document.createElement("div");
@@ -146,17 +161,8 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         for (let i = 0; i <= beforeCode.length; i++) {
             span.textContent = beforeCode.slice(0, i);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-            if (chat && li) {
-                const cleanText = beforeCode.replace(/```[\s\S]+?```/g, "").trim();
-                const title = cleanText.slice(0, 40) || "Nouveau chat";
-                li.querySelector("span").textContent = title;
-                chat.name = title;
-                document.getElementById("chatTitle").textContent = title;
-            }
             await new Promise(r => setTimeout(r, 15));
         }
-
         span.innerHTML = formatMessage(beforeCode);
     }
 
@@ -166,10 +172,12 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
     if (afterCode.trim()) addMessage(sender, afterCode);
 }
 
+// Nettoyer le texte
 function cleanMessage(text) {
     return text.replace(/\r\n|\r/g, "\n");
 }
 
+// Formater le texte (Markdown → HTML)
 function formatMessage(text) {
     const codeBlocks = [];
     text = text.replace(/```([\s\S]+?)```/g, (m, code) => {
@@ -184,31 +192,33 @@ function formatMessage(text) {
     text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
     text = text.replace(/^\* (.+)$/gm, "<li>$1</li>");
     if (text.includes("<li>")) text = `<ul>${text}</ul>`;
-
     text = text.replace(/\n/g, "<br>");
+
     text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
         const code = codeBlocks[index]
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
+        const lang = getCodeLang(code);
         return `
 <div class="code-block">
+<span class="code-lang" style="user-select:none; display:block; opacity:0.7; font-size:12px;">${lang}</span>
 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
 <pre><code>${code}</code></pre>
-<span class="code-lang">${getCodeLang(code)}</span>
 </div>`;
     });
 
     return text;
 }
 
-// Détecte la langue pour le footer invisible
+// Détecte la langue du code (première ligne)
 function getCodeLang(code) {
     const firstLine = code.split("\n")[0].trim().toLowerCase();
     if (["python","html","js","javascript","bash"].includes(firstLine)) return firstLine;
     return "code";
 }
 
+// Copier le code
 function copyCode(btn) {
     const codeElement = btn.parentElement.querySelector("code");
     if (!codeElement) return;
@@ -227,6 +237,7 @@ function copyCode(btn) {
     });
 }
 
+// État d’envoi
 function setSendingState(state) {
     isAITyping = state;
     const btn = document.getElementById("sendBtn");
@@ -234,6 +245,7 @@ function setSendingState(state) {
     btn.classList.toggle("disabled", state);
 }
 
+// Gestion de l’input et du bouton
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 
