@@ -2,7 +2,6 @@ let currentChat = null;
 let chats = [];
 let isAITyping = false;
 
-
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -119,7 +118,7 @@ async function sendMessage() {
 function addMessage(sender, text) {
     const div = document.getElementById("messages");
     const msg = document.createElement("div");
-    msg.className = "message-bubble " + sender;
+    msg.className = "message " + sender;
 
     const prefix = sender === "user" ? "You" : "GrahamAI";
     msg.innerHTML = `<span class="sender">${prefix}:</span> <span class="content">${formatMessage(text)}</span>`;
@@ -141,10 +140,9 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         el => el.classList.contains("active")
     ) : null;
 
-
     if (beforeCode.trim()) {
         const msg = document.createElement("div");
-        msg.className = "message-bubble " + sender;
+        msg.className = "message " + sender;
         const prefix = sender === "user" ? "You" : "GrahamAI";
         msg.innerHTML = `<span class="sender">${prefix}:</span> <span class="progress-text"></span>`;
         messagesDiv.appendChild(msg);
@@ -168,7 +166,6 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
             li.querySelector("span").textContent = chat.name;
         }
     }
-
 
     if (codeBlock) addMessage(sender, codeBlock);
 
@@ -198,7 +195,6 @@ function formatMessage(text) {
             <pre><code>${code}</code></pre>
         </div>`;
     });
-
     return text;
 }
 
@@ -254,4 +250,3 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
-
