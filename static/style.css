@@ -190,22 +190,21 @@ textarea:focus {
 .code-block pre {
   margin: 0;
   overflow-x: auto;
-  white-space: pre-wrap; 
+  white-space: pre-wrap;
   word-break: break-word;
-  padding-bottom: 18px; 
+  padding-bottom: 18px;
 }
 
 .code-block .code-lang {
-    position: absolute;
-    bottom: 4px;
-    right: 8px;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.25);
-    user-select: none; 
-    pointer-events: none; 
-    font-style: italic;
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  user-select: none;
+  pointer-events: none;
+  font-style: italic;
 }
-
 
 .copy-btn {
   position: absolute;
@@ -225,6 +224,8 @@ textarea:focus {
 .copy-btn:hover {
   opacity: 1;
 }
+
+
 
 
 
