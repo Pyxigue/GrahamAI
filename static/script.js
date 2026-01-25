@@ -1,6 +1,8 @@
 let currentChat = null;
 let chats = [];
 let typingInterval = null;
+let isAITyping = false;
+
 
 async function loadChats() {
     const res = await fetch("/api/chats");
@@ -216,15 +218,27 @@ function progressiveRenameChat(chat) {
     }, 50);
 }
 
+function setSendingState(isTyping) {
+    isAITyping = isTyping;
+
+    const btn = document.getElementById("sendBtn");
+    btn.disabled = isTyping;
+    btn.classList.toggle("disabled", isTyping);
+}
+
 
 const input = document.getElementById("messageInput");
 input.addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) {
+        if (isAITyping) {
+            e.preventDefault();
+            return;
+        }
         e.preventDefault();
         sendMessage();
     }
-
 });
+
 
 input.addEventListener("input", () => {
     input.style.height = "auto";
@@ -236,6 +250,7 @@ document.getElementById("newChatBtn").addEventListener("click", newChat);
 
 
 loadChats();
+
 
 
 
