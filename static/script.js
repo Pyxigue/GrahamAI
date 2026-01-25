@@ -2,7 +2,7 @@ let currentChat = null;
 let chats = [];
 let isAITyping = false;
 
-
+// ----------------- CHATS -----------------
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -44,8 +44,6 @@ function clearMessages() {
     document.getElementById("messages").innerHTML = "";
 }
 
-
-
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
@@ -73,13 +71,13 @@ function renderChatList() {
     });
 }
 
+// ----------------- MESSAGES -----------------
 function renderMessages(messages) {
     const div = document.getElementById("messages");
     div.innerHTML = "";
     if (!messages || messages.length === 0) return;
     messages.forEach(m => addMessage(m.sender, m.text));
 }
-
 
 async function sendMessage() {
     if (isAITyping) return;
@@ -119,18 +117,14 @@ async function sendMessage() {
     setSendingState(false);
 }
 
-
-
-
-
+// ----------------- AJOUT MESSAGES -----------------
 function addMessage(sender, text) {
     const div = document.getElementById("messages");
     const msg = document.createElement("div");
-    msg.className = "message " + sender;
+    msg.className = "message-bubble " + sender;
 
-    text = cleanMessage(text);
-    const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
-    msg.innerHTML = prefix + formatMessage(text);
+    const prefix = sender === "user" ? "You" : "GrahamAI";
+    msg.innerHTML = `<span class="sender">${prefix}:</span> <span class="content">${formatMessage(text)}</span>`;
 
     div.appendChild(msg);
     msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
@@ -149,12 +143,12 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         el => el.classList.contains("active")
     ) : null;
 
-
+    // Texte progressif avant code
     if (beforeCode.trim()) {
         const msg = document.createElement("div");
-        msg.className = "message " + sender;
-        const prefix = sender === "user" ? "<b>You :</b> " : "<b>GrahamAI :</b> ";
-        msg.innerHTML = prefix + "<span class='progress-text'></span>";
+        msg.className = "message-bubble " + sender;
+        const prefix = sender === "user" ? "You" : "GrahamAI";
+        msg.innerHTML = `<span class="sender">${prefix}:</span> <span class="progress-text"></span>`;
         messagesDiv.appendChild(msg);
 
         const span = msg.querySelector(".progress-text");
@@ -162,7 +156,6 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         for (let i = 0; i <= beforeCode.length; i++) {
             span.innerHTML = formatMessage(beforeCode.slice(0, i));
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
 
             if (chat && li) {
                 const newName = beforeCode.slice(0, 20) || "Nouveau chat";
@@ -178,47 +171,52 @@ async function addMessageProgressive(sender, text, chat = currentChat) {
         }
     }
 
-    if (codeBlock) {
-        addMessage(sender, codeBlock);
-    }
+    // Bloc code immédiat
+    if (codeBlock) addMessage(sender, codeBlock);
 
+    // Texte après code
     const afterCode = codeMatch ? text.slice(codeMatch.index + codeMatch[0].length) : "";
-    if (afterCode.trim()) {
-        addMessage(sender, afterCode);
-    }
+    if (afterCode.trim()) addMessage(sender, afterCode);
 }
 
-
-
-
-
-
+// ----------------- FORMATAGE -----------------
 function cleanMessage(text) {
-    return text
-        .replace(/^python\s*#?/i, "")
-        .replace(/^[#*]\s*/gm, "")
-        .replace(/\r\n|\r/g, "\n");
+    return text.replace(/\r\n|\r/g, "\n");
 }
 
 function formatMessage(text) {
-    const parts = text.split(/(```[\s\S]+?```)/g);
-    let out = "";
+    // Code inline
+    text = text.replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
-    parts.forEach(p => {
-        if (p.startsWith("```")) {
-            let code = p.slice(3, -3).replace(/^\s*[a-zA-Z0-9#+.-]+\s*\n/, "");
-            code = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            out += `
-                <div class="code-block">
-                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code>${code}</code></pre>
-                </div>`;
-        } else {
-            out += p.replace(/\n/g, "<br>");
-        }
+    // Gras
+    text = text.replace(/\*\*([^\*\n]+)\*\*/g, '<b>$1</b>');
+
+    // Italique
+    text = text.replace(/\*([^\*\n]+)\*/g, '<i>$1</i>');
+
+    // Titres
+    text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    text = text.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // Listes à puces
+    text = text.replace(/^\* (.+)$/gm, '<li>$1</li>');
+    if (text.includes("<li>")) text = `<ul>${text}</ul>`;
+
+    // Retours à la ligne
+    text = text.replace(/\n/g, "<br>");
+
+    // Bloc code ```
+    text = text.replace(/```([\s\S]+?)```/g, (m, code) => {
+        code = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return `
+        <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><code>${code}</code></pre>
+        </div>`;
     });
 
-    return out;
+    return text;
 }
 
 function copyCode(btn) {
@@ -228,6 +226,7 @@ function copyCode(btn) {
     setTimeout(() => btn.textContent = "Copy", 1500);
 }
 
+// ----------------- RENOMMAGE CHAT PROGRESSIF -----------------
 function progressiveRenameChat(chat) {
     const li = [...document.getElementById("chatList").children].find(
         el => el.querySelector("span").textContent === chat.name
@@ -244,7 +243,7 @@ function progressiveRenameChat(chat) {
     }, 40);
 }
 
-
+// ----------------- ÉTAT D’ENVOI -----------------
 function setSendingState(state) {
     isAITyping = state;
     const btn = document.getElementById("sendBtn");
@@ -252,35 +251,27 @@ function setSendingState(state) {
     btn.classList.toggle("disabled", state);
 }
 
-
+// ----------------- INPUT -----------------
 const input = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 
 input.addEventListener("input", () => {
-  input.style.height = "auto";
-  input.style.height = input.scrollHeight + "px";
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + "px";
 });
 
 input.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    if (!isAITyping) sendMessage();
-  }
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (!isAITyping) sendMessage();
+    }
 });
 
 sendBtn.addEventListener("click", () => {
-  if (!isAITyping) sendMessage();
+    if (!isAITyping) sendMessage();
 });
 
 document.getElementById("newChatBtn").onclick = newChat;
 
+// ----------------- INIT -----------------
 loadChats();
-
-
-
-
-
-
-
-
-
