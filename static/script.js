@@ -190,13 +190,21 @@ function copyCode(btn) {
 }
 
 function progressiveRenameChat(chat) {
-    const li = document.querySelector("#chatList .active span");
+    const li = [...document.getElementById("chatList").children].find(
+        el => el.querySelector("span").textContent === chat.name
+    );
+
+    if (!li) return;
+
+    const span = li.querySelector("span");
     let i = 0;
+
     const interval = setInterval(() => {
-        li.textContent = chat.name.slice(0, i++);
+        span.textContent = chat.name.slice(0, i++);
         if (i > chat.name.length) clearInterval(interval);
     }, 40);
 }
+
 
 function setSendingState(state) {
     isAITyping = state;
@@ -224,3 +232,4 @@ input.addEventListener("input", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
