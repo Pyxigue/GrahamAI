@@ -172,8 +172,23 @@ function cleanMessage(text) {
 }
 
 function formatMessage(text) {
+    const codeBlocks = [];
     text = text.replace(/```([\s\S]+?)```/g, (m, code) => {
-        code = code
+        codeBlocks.push(code);
+        return `___CODEBLOCK_${codeBlocks.length - 1}___`;
+    });
+    text = text.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+    text = text.replace(/\*\*([^\*\n]+)\*\*/g, "<b>$1</b>");
+    text = text.replace(/\*([^\*\n]+)\*/g, "<i>$1</i>");
+    text = text.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+    text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+    text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+    text = text.replace(/^\* (.+)$/gm, "<li>$1</li>");
+    if (text.includes("<li>")) text = `<ul>${text}</ul>`;
+
+    text = text.replace(/\n/g, "<br>");
+    text = text.replace(/___CODEBLOCK_(\d+)___/g, (m, index) => {
+        const code = codeBlocks[index]
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
@@ -184,20 +199,9 @@ function formatMessage(text) {
 </div>`;
     });
 
-    text = text.replace(/`([^`\n]+)`/g, "<code>$1</code>");
-    text = text.replace(/\*\*([^\*\n]+)\*\*/g, "<b>$1</b>");
-    text = text.replace(/\*([^\*\n]+)\*/g, "<i>$1</i>");
-
-
-    text = text.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-    text = text.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-    text = text.replace(/^# (.+)$/gm, "<h1>$1</h1>");
-
-
-    text = text.replace(/^\* (.+)$/gm, "<li>$1</li>");
-    if (text.includes("<li>")) text = `<ul>${text}</ul>`;
-    return text.replace(/\n(?!<\/?(ul|li|pre|code|h\d))/g, "<br>");
+    return text;
 }
+
 
 function copyCode(btn) {
     const code = btn.parentElement.querySelector("code").innerText;
@@ -234,5 +238,6 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
