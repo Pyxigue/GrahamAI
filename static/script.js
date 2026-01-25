@@ -204,11 +204,20 @@ function formatMessage(text) {
 
 
 function copyCode(btn) {
-    const code = btn.parentElement.querySelector("code").innerText;
-    navigator.clipboard.writeText(code);
-    btn.textContent = "Copied!";
-    setTimeout(() => btn.textContent = "Copy", 1500);
+    const codeElement = btn.parentElement.querySelector("code");
+    if (!codeElement) return;
+
+    const codeText = codeElement.innerText.trim();
+
+    navigator.clipboard.writeText(codeText).then(() => {
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy", 1500);
+    }).catch(err => {
+        console.error("Erreur lors de la copie:", err);
+        alert("Impossible de copier le code.");
+    });
 }
+
 
 function setSendingState(state) {
     isAITyping = state;
@@ -238,6 +247,7 @@ sendBtn.addEventListener("click", () => {
 
 document.getElementById("newChatBtn").onclick = newChat;
 loadChats();
+
 
 
 
