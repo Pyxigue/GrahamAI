@@ -213,54 +213,26 @@ async function addMessageProgressive(sender, text) {
     msg.appendChild(thinkingDot);
     messagesDiv.appendChild(msg);
 
-    let i = 0;
-    let inCode = false;
-    let codeEl = null;
-    let codeBuffer = "";
-    let textBuffer = "";
+    let fullText = "";
 
-    while (i < text.length) {
-        if (text.slice(i, i + 3) === "```") {
-            inCode = !inCode;
-            i += 3;
+    for (let i = 0; i < text.length; i++) {
+        fullText += text[i];
 
-            if (inCode) {
-                codeEl = document.createElement("pre");
-                const codeTag = document.createElement("code");
-                codeEl.appendChild(codeTag);
-                content.appendChild(codeEl);
-                codeBuffer = "";
-            } else {
-                codeEl = null;
-            }
-            continue;
-        }
+        const safeText = escapeHTML(fullText);
 
-        const char = text[i];
-        i++;
+        content.innerHTML = formatMessage(safeText);
 
-        if (inCode && codeEl) {
-            codeBuffer += char;
-            codeEl.querySelector("code").textContent = codeBuffer;
-        } else {
-            textBuffer += char;
-            content.textContent = textBuffer;
-        }
+        content.querySelectorAll("pre code").forEach(b =>
+            hljs.highlightElement(b)
+        );
 
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        await new Promise(r => setTimeout(r, 18));
+        await new Promise(r => setTimeout(r, 6));
     }
 
     thinkingDot.remove();
-
-    content.innerHTML = formatMessage(escapeHTML(text));
-
-    content.querySelectorAll("pre code").forEach(b =>
-        hljs.highlightElement(b)
-    );
-
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
+
 
 // -------------------- Formatage --------------------
 function cleanMessage(text) {
@@ -348,3 +320,4 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
