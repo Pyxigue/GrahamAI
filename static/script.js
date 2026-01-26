@@ -1,4 +1,3 @@
-Code complet stp:
 let currentChat = null;
 let chats = [];
 let isAITyping = false;
@@ -337,5 +336,6 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
