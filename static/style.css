@@ -225,6 +225,29 @@ textarea:focus {
   opacity: 1;
 }
 
+.ai-cursor {
+    display: inline-block;
+    margin-left: 6px;
+    animation: aiPulse 1.2s infinite ease-in-out;
+    opacity: 0.4;
+    transform-origin: center;
+}
+
+@keyframes aiPulse {
+    0% {
+        opacity: 0.3;
+        transform: scale(0.9) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.15) rotate(10deg);
+    }
+    100% {
+        opacity: 0.3;
+        transform: scale(0.9) rotate(0deg);
+    }
+}
+
 
 
 
