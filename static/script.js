@@ -154,7 +154,11 @@ function addMessage(sender, text) {
     msg.innerHTML = `<span class="content">${formatMessage(text)}</span>`;
     div.appendChild(msg);
 
-    msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+    // Protection si hljs non chargé
+    if (window.hljs) {
+        msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+    }
+
     div.scrollTop = div.scrollHeight;
 }
 
@@ -206,11 +210,13 @@ async function addMessageProgressive(sender, rawText) {
         }
 
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        await sleep(45); // ⬅ vitesse token-by-token (modifiable)
+        await sleep(45);
     }
 
     loader.remove();
-    msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+    if (window.hljs) {
+        msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+    }
 }
 
 /* =========================
@@ -220,6 +226,7 @@ async function addMessageProgressive(sender, rawText) {
 function formatMessage(text) {
     const blocks = [];
 
+    // On récupère les blocs code
     text = text.replace(/```(\w+)?\n([\s\S]+?)```/g, (_, lang, code) => {
         blocks.push({
             lang: lang || "text",
@@ -228,9 +235,10 @@ function formatMessage(text) {
         return `___BLOCK_${blocks.length - 1}___`;
     });
 
-    text = escapeHTML(text)
-        .replace(/\n/g, "<br>");
+    // On échappe le texte normal
+    text = escapeHTML(text).replace(/\n/g, "<br>");
 
+    // On remet les blocs code en HTML
     text = text.replace(/___BLOCK_(\d+)___/g, (_, i) => {
         const b = blocks[i];
         return `
@@ -266,8 +274,8 @@ async function sendMessage() {
     let text = input.value.trim();
     if (!text) return;
 
-    // auto wrap HTML
-    if (/<[a-z][\s\S]*>/i.test(text)) {
+    // auto wrap HTML ONLY if not already in ```html
+    if (!text.startsWith("```") && /<[a-z][\s\S]*>/i.test(text)) {
         text = `\`\`\`html\n${text}\n\`\`\``;
     }
 
