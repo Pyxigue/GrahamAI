@@ -3,7 +3,6 @@ let chats = [];
 let isAITyping = false;
 let typingToken = 0;
 
-// -------------------- Utils --------------------
 function typeTextProgressive(el, text, speed = 40) {
     el.textContent = "";
     let i = 0;
@@ -21,14 +20,13 @@ function escapeHTML(str) {
         .replace(/>/g, "&gt;");
 }
 
-function createThinkingDot() {
-    const dot = document.createElement("span");
-    dot.className = "thinking-dot";
-    dot.textContent = " ⚪";
-    return dot;
+function createThinkingCursor() {
+    const cursor = document.createElement("span");
+    cursor.className = "ai-cursor";
+    cursor.textContent = " ♾️";
+    return cursor;
 }
 
-// -------------------- Chats --------------------
 async function loadChats() {
     const res = await fetch("/api/chats");
     chats = await res.json();
@@ -78,7 +76,6 @@ function selectChat(chat) {
     updateChatTitleProgressive(chat.name || "Nouveau chat");
 }
 
-// -------------------- Titre progressif --------------------
 let currentTitleInterval = null;
 function updateChatTitleProgressive(title) {
     const el = document.getElementById("chatTitle");
@@ -95,7 +92,6 @@ function updateChatTitleProgressive(title) {
     }, 50);
 }
 
-// -------------------- Sidebar --------------------
 function renderChatList() {
     const list = document.getElementById("chatList");
     list.innerHTML = "";
@@ -129,7 +125,6 @@ function renderChatList() {
     });
 }
 
-// -------------------- Messages --------------------
 function clearMessages() {
     document.getElementById("messages").innerHTML = "";
 }
@@ -207,10 +202,10 @@ async function addMessageProgressive(sender, text) {
     const content = document.createElement("span");
     content.className = "content";
 
-    const thinkingDot = createThinkingDot();
+    const thinkingCursor = createThinkingCursor();
 
     msg.appendChild(content);
-    msg.appendChild(thinkingDot);
+    msg.appendChild(thinkingCursor);
     messagesDiv.appendChild(msg);
 
     let fullText = "";
@@ -230,11 +225,10 @@ async function addMessageProgressive(sender, text) {
         await new Promise(r => setTimeout(r, 6));
     }
 
-    thinkingDot.remove();
+    thinkingCursor.remove();
 }
 
 
-// -------------------- Formatage --------------------
 function cleanMessage(text) {
     return text.replace(/\r\n|\r/g, "\n");
 }
@@ -275,7 +269,6 @@ function formatMessage(text) {
     return text;
 }
 
-// -------------------- Copy code --------------------
 function copyCode(btn) {
     const codeElement = btn.parentElement.querySelector("code");
     if (!codeElement) return;
@@ -290,7 +283,6 @@ function copyCode(btn) {
     });
 }
 
-// -------------------- UI --------------------
 function setSendingState(state) {
     isAITyping = state;
     const btn = document.getElementById("sendBtn");
@@ -320,4 +312,5 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
