@@ -23,9 +23,10 @@ function escapeHTML(str) {
 function createInfinityLoader() {
     const span = document.createElement("span");
     span.className = "infinity";
-    span.textContent = "♾️";
+    span.textContent = "• • •";
     return span;
 }
+
 
 
 async function loadChats() {
@@ -210,45 +211,17 @@ async function addMessageProgressive(sender, text) {
     messagesDiv.appendChild(msg);
 
     let i = 0;
-    let inCode = false;
-    let currentCodeBlock = null;
-
     while (i < text.length) {
-        if (text.slice(i, i + 3) === "```") {
-            inCode = !inCode;
-            i += 3;
-
-            if (inCode) {
-                const pre = document.createElement("pre");
-                const code = document.createElement("code");
-                pre.appendChild(code);
-                content.appendChild(pre);
-                currentCodeBlock = code;
-            } else {
-                currentCodeBlock = null;
-            }
-            continue;
-        }
-
-        const char = text[i];
+        content.textContent += text[i];
         i++;
-
-        if (inCode && currentCodeBlock) {
-            currentCodeBlock.textContent += char;
-        } else {
-            content.textContent += char;
-        }
-
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
         await new Promise(r => setTimeout(r, 35));
     }
+
     loader.remove();
+    content.innerHTML = formatMessage(text);
 
-    msg.querySelectorAll("pre code").forEach(b =>
-        hljs.highlightElement(b)
-    );
-
+    msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
@@ -336,6 +309,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
