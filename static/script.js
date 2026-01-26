@@ -20,12 +20,13 @@ function escapeHTML(str) {
         .replace(/>/g, "&gt;");
 }
 
-function createThinkingCursor() {
-    const cursor = document.createElement("span");
-    cursor.className = "ai-cursor";
-    cursor.textContent = " ♾️";
-    return cursor;
+function createInfinityLoader() {
+    const span = document.createElement("span");
+    span.className = "infinity";
+    span.textContent = "♾️";
+    return span;
 }
+
 
 async function loadChats() {
     const res = await fetch("/api/chats");
@@ -202,30 +203,53 @@ async function addMessageProgressive(sender, text) {
     const content = document.createElement("span");
     content.className = "content";
 
-    const thinkingCursor = createThinkingCursor();
+    const loader = createInfinityLoader();
 
     msg.appendChild(content);
-    msg.appendChild(thinkingCursor);
+    msg.appendChild(loader);
     messagesDiv.appendChild(msg);
 
-    let fullText = "";
+    let i = 0;
+    let inCode = false;
+    let currentCodeBlock = null;
 
-    for (let i = 0; i < text.length; i++) {
-        fullText += text[i];
+    while (i < text.length) {
+        if (text.slice(i, i + 3) === "```") {
+            inCode = !inCode;
+            i += 3;
 
-        const safeText = escapeHTML(fullText);
+            if (inCode) {
+                const pre = document.createElement("pre");
+                const code = document.createElement("code");
+                pre.appendChild(code);
+                content.appendChild(pre);
+                currentCodeBlock = code;
+            } else {
+                currentCodeBlock = null;
+            }
+            continue;
+        }
 
-        content.innerHTML = formatMessage(safeText);
+        const char = text[i];
+        i++;
 
-        content.querySelectorAll("pre code").forEach(b =>
-            hljs.highlightElement(b)
-        );
+        if (inCode && currentCodeBlock) {
+            currentCodeBlock.textContent += char;
+        } else {
+            content.textContent += char;
+        }
 
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        await new Promise(r => setTimeout(r, 6));
-    }
 
-    thinkingCursor.remove();
+        await new Promise(r => setTimeout(r, 35));
+    }
+    loader.remove();
+
+    msg.querySelectorAll("pre code").forEach(b =>
+        hljs.highlightElement(b)
+    );
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 
@@ -312,5 +336,6 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
