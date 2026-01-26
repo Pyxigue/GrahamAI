@@ -23,7 +23,7 @@ function escapeHTML(str) {
 function createInfinityLoader() {
     const span = document.createElement("span");
     span.className = "infinity";
-    span.textContent = "• • •";
+    span.textContent = " ♾️";
     return span;
 }
 
@@ -309,6 +309,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
