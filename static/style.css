@@ -225,20 +225,19 @@ textarea:focus {
   opacity: 1;
 }
 
-.infinity {
+.typing-cursor {
     display: inline-block;
-    font-size: 18px;
-    margin-left: 6px;
-    opacity: 0.8;
-    letter-spacing: 2px;
-    animation: infinityPulse 1.2s infinite;
+    margin-left: 3px;
+    font-weight: bold;
+    animation: blink 0.8s infinite;
 }
 
-@keyframes infinityPulse {
-    0%   { opacity: 0.2; transform: translateY(0px); }
-    50%  { opacity: 1; transform: translateY(-2px); }
-    100% { opacity: 0.2; transform: translateY(0px); }
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
 }
+
+
 
 
 
