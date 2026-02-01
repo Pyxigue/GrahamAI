@@ -3,7 +3,7 @@ let chats = [];
 let isAITyping = false;
 let typingToken = 0;
 
-function typeTextProgressive(el, text, speed = 40) {
+function typeTextProgressive(el, text, speed = 6) {
     el.textContent = "";
     let i = 0;
     const interval = setInterval(() => {
@@ -23,7 +23,7 @@ function escapeHTML(str) {
 function createInfinityLoader() {
     const span = document.createElement("span");
     span.className = "infinity";
-    span.textContent = " ♾️";
+    span.textContent = " ⚪";
     return span;
 }
 
@@ -309,6 +309,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
