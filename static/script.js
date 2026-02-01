@@ -3,7 +3,7 @@ let chats = [];
 let isAITyping = false;
 let typingToken = 0;
 
-function typeTextProgressive(el, text, speed = 6) {
+function typeTextProgressive(el, text, speed = 40) {
     el.textContent = "";
     let i = 0;
     const interval = setInterval(() => {
@@ -206,24 +206,51 @@ async function addMessageProgressive(sender, text) {
 
     const loader = createInfinityLoader();
 
+    // Curseur clignotant
+    const cursor = document.createElement("span");
+    cursor.className = "typing-cursor";
+    cursor.textContent = "|";
+
     msg.appendChild(content);
+    msg.appendChild(cursor);
     msg.appendChild(loader);
     messagesDiv.appendChild(msg);
 
     let i = 0;
-    while (i < text.length) {
-        content.textContent += text[i];
-        i++;
+    let batchSize = 3; 
+    let baseSpeed = 10;
+
+    function blinkCursor() {
+        cursor.style.opacity = cursor.style.opacity === "0" ? "1" : "0";
+    }
+    const cursorBlinkInterval = setInterval(blinkCursor, 450);
+
+    async function typeLoop() {
+        while (i < text.length) {
+            content.textContent += text.slice(i, i + batchSize);
+            i += batchSize;
+
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            let progress = i / text.length;
+            let dynamicSpeed = baseSpeed + progress * 25;
+
+            await new Promise(r => setTimeout(r, dynamicSpeed));
+        }
+        
+        clearInterval(cursorBlinkInterval);
+        cursor.remove();
+        loader.remove();
+
+        content.innerHTML = formatMessage(text);
+
+        msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        await new Promise(r => setTimeout(r, 35));
     }
 
-    loader.remove();
-    content.innerHTML = formatMessage(text);
-
-    msg.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    typeLoop();
 }
+
 
 
 function cleanMessage(text) {
@@ -309,6 +336,7 @@ sendBtn.addEventListener("click", () => {
 document.getElementById("newChatBtn").onclick = newChat;
 
 loadChats();
+
 
 
 
